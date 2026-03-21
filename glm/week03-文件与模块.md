@@ -806,144 +806,251 @@ my_test_project/
 
 ---
 
-## 四、练习内容
+## 四、练习内容（20 题）
 
-### 练习1：配置管理器
+### 基础练习（1-8）
 
+**练习1：文件读写基础**
 ```python
-# 实现 ConfigManager 类
+# 1. 写入文本文件 "hello.txt"，内容为 "Hello, Python!"
+# 2. 读取文件内容并打印
+# 3. 追加一行 "Welcome to testing!"
+# 4. 读取所有行到列表
+# 5. 使用 with 语句确保文件关闭
+```
+
+**练习2：JSON 文件操作**
+```python
+data = {
+    "users": [
+        {"name": "张三", "age": 25},
+        {"name": "李四", "age": 30}
+    ],
+    "settings": {"timeout": 30, "retry": 3}
+}
+# 1. 将 data 保存为 users.json
+# 2. 读取 users.json 并打印
+# 3. 添加一个用户并保存
+# 4. 美化输出（indent=2）
+# 5. 处理 JSONDecodeError 异常
+```
+
+**练习3：CSV 文件操作**
+```python
+# 1. 创建测试数据 CSV：username,password,expected
+# 2. 读取 CSV 并打印每行
+# 3. 使用 csv.DictReader 读取
+# 4. 筛选出 expected=true 的行
+# 5. 追加新行到 CSV
+```
+
+**练习4：YAML 配置文件**
+```python
+# config.yaml 内容：
+# database:
+#   host: localhost
+#   port: 3306
+#   name: test_db
+
+# 1. 使用 PyYAML 读取配置
+# 2. 访问 database.host
+# 3. 修改 port 并保存
+# 4. 处理 YAML 解析异常
+# 5. 支持环境变量 ${DB_HOST}
+```
+
+**练习5：路径操作**
+```python
+from pathlib import Path
+# 1. 获取当前脚本所在目录
+# 2. 创建 output/reports 目录
+# 3. 检查文件是否存在
+# 4. 获取文件扩展名
+# 5. 遍历目录下所有 .py 文件
+```
+
+**练习6：文件搜索与过滤**
+```python
+# 1. 列出当前目录所有文件
+# 2. 只列出 .txt 文件
+# 3. 递归列出所有子目录中的 .py 文件
+# 4. 按修改时间排序文件
+# 5. 查找大于 1MB 的文件
+```
+
+**练习7：模块导入**
+```python
+# 创建 my_utils.py 模块
+# 1. 定义函数 add(a, b)
+# 2. 在另一个文件中 import my_utils
+# 3. 使用 from my_utils import add
+# 4. 使用 import my_utils as utils
+# 5. 理解 __name__ == "__main__"
+```
+
+**练习8：包结构**
+```python
+# 创建包结构：
+# my_package/
+# ├── __init__.py
+# ├── utils.py
+# └── subpackage/
+#     └── __init__.py
+
+# 1. 创建 __init__.py 导出公共接口
+# 2. 使用相对导入
+# 3. 从包导入模块
+# 4. 设置 __all__
+```
+
+### 进阶练习（9-16）
+
+**练习9：配置管理器**
+```python
 class ConfigManager:
-    """
-    配置管理器
-    - 支持 YAML 和 JSON 格式
-    - 支持环境变量覆盖
-    - 支持热重载
-    - 支持点号访问嵌套配置
-    """
-
-    def __init__(self, config_file):
-        pass
-
-    def get(self, key, default=None):
-        """获取配置，支持 key.nested.access"""
-        pass
-
-    def set(self, key, value):
-        """设置配置"""
-        pass
-
-    def reload(self):
-        """重新加载配置文件"""
-        pass
-
-    def save(self):
-        """保存配置到文件"""
-        pass
-
-# 测试
-config = ConfigManager("config.yaml")
-print(config.get("database.host"))
-config.set("timeout", 60)
-config.save()
+    """配置管理器"""
+    # 1. 支持 YAML 和 JSON 格式
+    # 2. 支持环境变量覆盖
+    # 3. 支持热重载 reload()
+    # 4. 支持点号访问 get("db.host")
+    # 5. 支持保存修改 save()
 ```
 
-### 练习2：数据驱动测试框架
-
+**练习10：数据驱动测试框架**
 ```python
-# 实现数据驱动测试工具
 class DataDriver:
-    """
-    数据驱动测试
-    - 支持 CSV、JSON、YAML 格式
-    - 自动生成 pytest 参数化数据
-    """
-
-    @staticmethod
-    def load_csv(filepath):
-        """加载 CSV 数据"""
-        pass
-
-    @staticmethod
-    def load_json(filepath):
-        """加载 JSON 数据"""
-        pass
-
-    @staticmethod
-    def load_yaml(filepath):
-        """加载 YAML 数据"""
-        pass
-
-    @classmethod
-    def parametrize(cls, filepath):
-        """返回 pytest.mark.parametrize 装饰器"""
-        pass
-
-# 使用
-@DataDriver.parametrize("test_data.csv")
-def test_login(username, password, expected):
-    pass
+    """数据驱动测试"""
+    # 1. load_csv() 加载 CSV
+    # 2. load_json() 加载 JSON
+    # 3. load_yaml() 加载 YAML
+    # 4. to_pytest_params() 转为 pytest 参数
+    # 5. 支持 pytest.mark.parametrize
 ```
 
-### 练习3：测试报告生成器
-
+**练习11：测试报告生成器**
 ```python
-# 实现测试报告生成器
 class ReportGenerator:
-    """
-    测试报告生成器
-    - 收集测试结果
-    - 生成 JSON/HTML 报告
-    - 支持历史对比
-    """
-
-    def __init__(self, output_dir="reports"):
-        pass
-
-    def add_result(self, case_name, status, duration, error=None):
-        """添加测试结果"""
-        pass
-
-    def summary(self):
-        """返回统计信息"""
-        pass
-
-    def save_json(self, filename="report.json"):
-        """保存 JSON 报告"""
-        pass
-
-    def save_html(self, filename="report.html"):
-        """保存 HTML 报告"""
-        pass
-
-# 使用
-report = ReportGenerator()
-report.add_result("登录测试", "pass", 1.5)
-report.add_result("搜索测试", "fail", 2.0, "超时")
-print(report.summary())
-report.save_json()
+    """测试报告生成器"""
+    # 1. add_result() 添加结果
+    # 2. summary() 统计信息
+    # 3. save_json() 保存 JSON
+    # 4. save_html() 保存 HTML
+    # 5. compare_with_history() 历史对比
 ```
 
-### 练习4：搭建测试项目
+**练习12：日志系统**
+```python
+class Logger:
+    """简易日志系统"""
+    # 1. 支持 DEBUG/INFO/WARN/ERROR 级别
+    # 2. 输出到文件和控制台
+    # 3. 按日期分割日志文件
+    # 4. 支持日志格式配置
+    # 5. 使用 JSON 格式存储
+```
 
+**练习13：缓存管理**
+```python
+class FileCache:
+    """文件缓存"""
+    # 1. cache_get(key) 获取缓存
+    # 2. cache_set(key, value, ttl) 设置缓存
+    # 3. cache_delete(key) 删除缓存
+    # 4. cache_clear() 清空缓存
+    # 5. 自动过期清理
+```
+
+**练习14：文件监控**
+```python
+class FileWatcher:
+    """文件变化监控"""
+    # 1. watch(path, callback) 监控文件
+    # 2. on_modified() 修改回调
+    # 3. on_created() 创建回调
+    # 4. on_deleted() 删除回调
+    # 5. stop() 停止监控
+```
+
+**练习15：批量文件处理**
+```python
+class BatchFileProcessor:
+    """批量文件处理器"""
+    # 1. process_all() 处理所有文件
+    # 2. rename_files() 批量重命名
+    # 3. copy_with_structure() 复制保持结构
+    # 4. find_and_replace() 查找替换内容
+    # 5. generate_manifest() 生成文件清单
+```
+
+**练习16：测试数据生成器**
+```python
+class TestDataGenerator:
+    """测试数据生成"""
+    # 1. generate_users(n) 生成用户数据
+    # 2. generate_orders(n) 生成订单数据
+    # 3. save_to_csv(data, path) 保存 CSV
+    # 4. save_to_json(data, path) 保存 JSON
+    # 5. load_template(template_path) 加载模板
+```
+
+### 综合练习（17-20）
+
+**练习17：搭建测试项目**
 ```bash
-# 创建完整的项目结构
+# 创建完整项目结构
 my_test_project/
 ├── config/
-│   └── settings.yaml
+│   ├── settings.yaml
+│   └── settings.local.yaml
 ├── tests/
+│   ├── __init__.py
 │   ├── conftest.py
 │   ├── test_api.py
 │   └── data/
-│       └── users.csv
+│       ├── users.csv
+│       └── orders.json
 ├── utils/
 │   ├── __init__.py
 │   ├── config.py
+│   ├── logger.py
 │   └── http_client.py
+├── reports/
 ├── requirements.txt
 └── pytest.ini
 ```
 
----
+**练习18：多环境配置管理**
+```python
+class EnvironmentConfig:
+    """多环境配置"""
+    # 1. 支持 dev/test/staging/prod 环境
+    # 2. 根据环境变量切换配置
+    # 3. 配置继承（local 覆盖 base）
+    # 4. 敏感信息加密存储
+    # 5. 配置验证和默认值
+```
+
+**练习19：测试数据版本管理**
+```python
+class DataVersionManager:
+    """测试数据版本管理"""
+    # 1. snapshot() 创建数据快照
+    # 2. restore(version) 恢复到指定版本
+    # 3. diff(v1, v2) 对比版本差异
+    # 4. list_versions() 列出所有版本
+    # 5. auto_cleanup() 自动清理旧版本
+```
+
+**练习20：插件化配置加载器**
+```python
+class ConfigLoader:
+    """插件化配置加载"""
+    # 1. register_loader(ext, loader) 注册加载器
+    # 2. load(path) 自动选择加载器
+    # 3. 支持 .yaml/.json/.toml/.ini
+    # 4. 支持远程配置 (HTTP)
+    # 5. 支持配置合并策略
+```
 
 ## 五、检验标准
 

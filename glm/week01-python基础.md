@@ -622,81 +622,264 @@ evens = list(filter(lambda x: x % 2 == 0, numbers))  # [2, 4, 6]
 
 ---
 
-## 四、练习内容
+## 四、练习内容（20 题）
 
-### 练习1：测试数据统计
+### 基础练习（1-8）
 
+**练习1：列表基础操作**
 ```python
-# 给定测试结果数据
+# 创建一个包含 10 个测试用例名的列表
+# 完成以下操作：
+# 1. 添加一个新用例到末尾
+# 2. 在第 3 个位置插入一个用例
+# 3. 删除第一个用例
+# 4. 获取列表长度
+# 5. 判断"登录测试"是否在列表中
+```
+
+**练习2：列表切片**
+```python
+cases = ["登录", "搜索", "支付", "订单", "退款", "评价", "收藏", "分享", "注销", "退出"]
+# 1. 获取前 5 个用例
+# 2. 获取后 3 个用例
+# 3. 获取索引 2-6 的用例（不含 6）
+# 4. 每隔 2 个取一个用例
+# 5. 反转列表
+```
+
+**练习3：列表推导式**
+```python
+numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+# 使用列表推导式：
+# 1. 生成所有数字的平方
+# 2. 筛选出偶数
+# 3. 筛选出大于 5 的奇数
+# 4. 将每个数字转为字符串
+# 5. 生成 (数字, 平方) 元组列表
+```
+
+**练习4：字典基础**
+```python
+# 创建用户字典，包含 username, password, age, is_vip 四个字段
+# 1. 添加 email 字段
+# 2. 修改 age 为 30
+# 3. 安全获取 phone（不存在返回"未设置"）
+# 4. 删除 is_vip 字段
+# 5. 遍历打印所有键值对
+```
+
+**练习5：字典嵌套**
+```python
+test_data = {
+    "login": {"valid": ["admin", "user"], "invalid": ["", "guest"]},
+    "search": {"keywords": ["酒店", "机票"]},
+    "order": {"status": ["pending", "paid", "cancelled"]}
+}
+# 1. 获取 login 下的 valid 用户列表
+# 2. 添加一个新的搜索关键词
+# 3. 统计 order 下有多少种状态
+# 4. 判断 search 下是否有 "火车票" 关键词
+```
+
+**练习6：字符串格式化**
+```python
+name, age, score = "张三", 28, 95.5
+# 使用 f-string 输出：
+# 1. "姓名：张三，年龄：28"
+# 2. "张三的成绩是 95.5 分"
+# 3. "明年张三 29 岁"
+# 4. "成绩等级：A"（90以上为A）
+# 5. 格式化成绩保留 1 位小数
+```
+
+**练习7：字符串方法**
+```python
+text = "  Hello, Python World!  "
+# 1. 去除首尾空格
+# 2. 转为小写
+# 3. 替换 "Python" 为 "Java"
+# 4. 按 ", " 分割
+# 5. 统计 "o" 出现次数
+```
+
+**练习8：控制流**
+```python
+# 1. 使用 for 循环打印 1-10
+# 2. 使用 while 循环计算 1+2+...+100
+# 3. 使用 for + enumerate 打印带索引的用例名
+# 4. 使用 zip 同时遍历两个列表
+# 5. 使用 break 找到第一个大于 50 的数
+```
+
+### 进阶练习（9-16）
+
+**练习9：测试数据统计**
+```python
 test_results = [
     {"name": "登录测试", "status": "pass", "duration": 1.2},
     {"name": "搜索测试", "status": "fail", "duration": 2.5},
     {"name": "支付测试", "status": "pass", "duration": 3.1},
     {"name": "订单测试", "status": "fail", "duration": 1.8},
     {"name": "退出测试", "status": "pass", "duration": 0.5},
-    {"name": "注册测试", "status": "pass", "duration": 2.0},
-    {"name": "收藏测试", "status": "skip", "duration": 0.0},
 ]
 
-# 任务1：统计各状态的用例数量
-# 期望输出: {"pass": 4, "fail": 2, "skip": 1}
-
-# 任务2：找出所有失败的用例名
-# 期望输出: ["搜索测试", "订单测试"]
-
-# 任务3：计算通过用例的平均耗时
-# 期望输出: 1.7
-
-# 任务4：按耗时降序排列
-# 期望输出: [{"name": "支付测试", ...}, {"name": "搜索测试", ...}, ...]
+# 1. 统计各状态的用例数量
+# 2. 找出所有失败的用例名
+# 3. 计算通过用例的平均耗时
+# 4. 按耗时降序排列
+# 5. 找出耗时最长的用例
 ```
 
-### 练习2：配置文件处理
-
+**练习10：配置文件处理**
 ```python
-# 给定配置字典
 config = {
     "base_url": "https://api.ctrip.com",
     "timeout": 30,
-    "retry": 3,
     "headers": {
         "Content-Type": "application/json",
         "Authorization": "Bearer xxx"
-    },
-    "environments": {
-        "dev": "https://dev.ctrip.com",
-        "test": "https://test.ctrip.com",
-        "prod": "https://api.ctrip.com"
     }
 }
 
-# 任务1：编写函数 get_config(key, default=None)
+# 编写函数 get_config(key, default=None)
 # 支持点号访问嵌套配置
-# get_config("headers.Content-Type") 返回 "application/json"
-# get_config("timeout") 返回 30
-# get_config("not_exist", "default") 返回 "default"
-
-# 任务2：编写函数 switch_env(env_name)
-# 将 base_url 切换到指定环境
+# get_config("headers.Content-Type") → "application/json"
+# get_config("timeout") → 30
+# get_config("not_exist", "default") → "default"
 ```
 
-### 练习3：日志解析
-
+**练习11：日志解析**
 ```python
-# 给定日志字符串
 logs = """
 [2024-01-15 10:30:45] INFO  - 测试开始
-[2024-01-15 10:30:46] INFO  - 执行登录测试
-[2024-01-15 10:30:47] ERROR - 登录失败：用户名不存在
-[2024-01-15 10:30:48] INFO  - 执行搜索测试
-[2024-01-15 10:30:49] WARN  - 响应时间过长：2.5s
-[2024-01-15 10:30:50] INFO  - 搜索测试通过
+[2024-01-15 10:30:47] ERROR - 登录失败
+[2024-01-15 10:30:49] WARN  - 响应慢
 [2024-01-15 10:30:51] INFO  - 测试结束
 """
 
-# 任务1：提取所有 ERROR 级别的日志
-# 任务2：统计各级别日志数量
-# 任务3：提取所有时间戳，计算测试总耗时
+# 1. 提取所有 ERROR 级别的日志
+# 2. 统计各级别日志数量
+# 3. 使用正则提取时间戳
+# 4. 计算测试总耗时
+```
+
+**练习12：函数参数**
+```python
+# 编写函数 create_test_case(name, priority="P2", *tags, **options)
+# 要求：
+# 1. name 是必填参数
+# 2. priority 默认 "P2"
+# 3. tags 接收任意数量的标签
+# 4. options 接收任意关键字参数
+# 调用示例：
+# create_test_case("登录测试", "P0", "smoke", "regression", timeout=30, retry=3)
+```
+
+**练习13：列表与字典转换**
+```python
+users = [
+    {"name": "张三", "age": 25},
+    {"name": "李四", "age": 30},
+    {"name": "王五", "age": 28},
+]
+
+# 1. 转为字典：{"张三": {"name": "张三", "age": 25}, ...}
+# 2. 提取所有用户名列表
+# 3. 提取所有年龄列表
+# 4. 按年龄升序排列
+# 5. 筛选年龄大于 26 的用户
+```
+
+**练习14：正则表达式**
+```python
+import re
+
+text = "订单号：12345，金额：678.90元，手机：13812345678"
+
+# 1. 提取订单号（纯数字）
+# 2. 提取金额（浮点数）
+# 3. 提取手机号（11位数字）
+# 4. 验证邮箱格式
+# 5. 将所有数字替换为 ***
+```
+
+**练习15：综合 - 测试报告生成**
+```python
+cases = [
+    {"name": "登录", "status": "pass", "time": 1.2},
+    {"name": "搜索", "status": "fail", "time": 2.5},
+    {"name": "支付", "status": "pass", "time": 3.0},
+]
+
+# 编写函数 generate_report(cases) 返回：
+# {
+#     "total": 3,
+#     "passed": 2,
+#     "failed": 1,
+#     "pass_rate": "66.67%",
+#     "avg_time": 2.23,
+#     "failed_cases": ["搜索"]
+# }
+```
+
+**练习16：数据去重与合并**
+```python
+list1 = [1, 2, 3, 4, 5]
+list2 = [4, 5, 6, 7, 8]
+
+# 1. 找出两个列表的交集
+# 2. 找出两个列表的并集
+# 3. 找出只在 list1 中的元素
+# 4. 合并两个列表并去重
+# 5. 找出两个列表中重复的元素
+```
+
+### 综合练习（17-20）
+
+**练习17：模拟测试执行器**
+```python
+# 编写函数 execute_tests(test_cases)
+# test_cases 是用例列表，每个用例包含 name 和 steps
+# 模拟执行每个步骤，随机返回 pass/fail
+# 返回执行结果列表，包含用例名、状态、耗时
+
+test_cases = [
+    {"name": "登录", "steps": ["打开页面", "输入用户名", "输入密码", "点击登录"]},
+    {"name": "搜索", "steps": ["输入关键词", "点击搜索", "验证结果"]},
+]
+```
+
+**练习18：配置管理器**
+```python
+# 编写 ConfigManager 类（用字典模拟）
+# 实现以下方法：
+# 1. load(config_dict) - 加载配置
+# 2. get(key, default=None) - 获取配置（支持点号访问嵌套）
+# 3. set(key, value) - 设置配置
+# 4. get_env(env_name) - 获取环境配置
+# 5. to_dict() - 导出为字典
+```
+
+**练习19：测试数据生成器**
+```python
+# 编写函数生成测试数据
+# 1. generate_users(n) - 生成 n 个随机用户数据
+# 2. generate_phone() - 生成随机手机号
+# 3. generate_email(name) - 根据名字生成邮箱
+# 4. generate_test_cases(module, count) - 生成测试用例数据
+# 5. save_to_json(data, filename) - 保存为 JSON 文件
+```
+
+**练习20：简易断言库**
+```python
+# 编写简易断言函数
+# 1. assert_equal(actual, expected, msg="")
+# 2. assert_not_equal(actual, expected, msg="")
+# 3. assert_in(item, container, msg="")
+# 4. assert_true(condition, msg="")
+# 5. assert_raises(func, exception_type, msg="")
+
+# 要求：断言失败时抛出 AssertionError，包含错误信息和期望值
 ```
 
 ---

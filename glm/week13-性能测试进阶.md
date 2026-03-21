@@ -641,25 +641,661 @@ class AIBugAnalyzer:
 
 ## 四、练习内容
 
-### 练习1：RAG 评估
+### 基础练习（1-8）
+
+#### 练习1：向量数据库基础操作
 
 ```python
-# 构建简单 RAG 系统
-# 实现检索和生成评估
+# 使用 ChromaDB 实现向量存储
+# 要求：
+# 1. 创建集合（Collection）
+# 2. 添加文档向量
+# 3. 实现相似度检索
+
+import chromadb
+from chromadb.config import Settings
+
+class VectorStore:
+    """向量存储类"""
+
+    def __init__(self, collection_name: str = "documents"):
+        self.client = chromadb.Client(Settings())
+        self.collection = self.client.create_collection(collection_name)
+
+    def add_documents(self, documents: list, ids: list):
+        """添加文档"""
+        # TODO: 实现代码
+        pass
+
+    def search(self, query: str, top_k: int = 5) -> list:
+        """检索相似文档"""
+        # TODO: 实现代码
+        pass
+
+# 测试
+store = VectorStore()
+store.add_documents(["文档1内容", "文档2内容"], ["id1", "id2"])
+results = store.search("查询内容", top_k=3)
 ```
 
-### 练习2：Agent 测试
+#### 练习2：文档分块
 
 ```python
-# 测试旅行助手 Agent
-# 覆盖工具调用和多轮对话
+# 实现文档分块功能
+# 要求：
+# 1. 支持按字符数分块
+# 2. 支持按句子分块
+# 3. 支持重叠分块
+
+def chunk_by_chars(text: str, chunk_size: int = 500, overlap: int = 50) -> list:
+    """按字符数分块"""
+    # TODO: 实现代码
+    pass
+
+def chunk_by_sentences(text: str, max_sentences: int = 5) -> list:
+    """按句子分块"""
+    # TODO: 实现代码
+    pass
+
+# 测试
+text = "这是一段很长的文本..." * 100
+chunks = chunk_by_chars(text, chunk_size=200, overlap=20)
+print(f"分块数量: {len(chunks)}")
 ```
 
-### 练习3：AI 生成用例
+#### 练习3：简单 RAG 系统实现
+
+```python
+# 实现简单的 RAG 系统
+# 要求：
+# 1. 文档索引功能
+# 2. 相似度检索
+# 3. 上下文拼接
+
+class SimpleRAG:
+    def __init__(self, documents: list):
+        self.documents = documents
+        self.index = None
+
+    def build_index(self):
+        """构建索引"""
+        # TODO: 实现代码
+        pass
+
+    def retrieve(self, query: str, top_k: int = 3) -> list:
+        """检索相关文档"""
+        # TODO: 实现代码
+        pass
+
+    def build_context(self, query: str) -> str:
+        """构建上下文"""
+        # TODO: 实现代码
+        pass
+
+# 测试
+documents = ["文档1", "文档2", "文档3"]
+rag = SimpleRAG(documents)
+rag.build_index()
+context = rag.build_context("查询问题")
+```
+
+#### 练习4：检索质量评估
+
+```python
+# 评估检索质量
+# 要求：
+# 1. 计算 Precision@K
+# 2. 计算 Recall@K
+# 3. 计算 F1 分数
+
+def evaluate_retrieval(retrieved_ids: list, relevant_ids: list, k: int = 5) -> dict:
+    """
+    评估检索质量
+
+    返回：
+    {
+        "precision": float,
+        "recall": float,
+        "f1": float
+    }
+    """
+    # TODO: 实现代码
+    pass
+
+# 测试
+result = evaluate_retrieval(
+    retrieved_ids=["1", "2", "3", "4", "5"],
+    relevant_ids=["2", "3", "7"],
+    k=5
+)
+print(f"Precision@5: {result['precision']}")
+```
+
+#### 练习5：Agent 工具调用测试
+
+```python
+# 测试 Agent 的工具调用能力
+# 要求：
+# 1. 定义工具函数
+# 2. 模拟工具调用
+# 3. 验证调用结果
+
+TOOLS = [
+    {
+        "name": "search_hotel",
+        "description": "搜索酒店",
+        "parameters": {
+            "city": "城市名称",
+            "check_in": "入住日期",
+            "check_out": "退房日期"
+        }
+    },
+    {
+        "name": "book_hotel",
+        "description": "预订酒店",
+        "parameters": {
+            "hotel_id": "酒店ID",
+            "user_name": "用户名"
+        }
+    }
+]
+
+def test_tool_calling(user_input: str, expected_tool: str) -> bool:
+    """测试工具调用是否正确"""
+    # TODO: 实现代码
+    pass
+
+# 测试
+assert test_tool_calling("帮我搜索北京的酒店", "search_hotel")
+assert test_tool_calling("预订酒店ID为123的房间", "book_hotel")
+```
+
+#### 练习6：参数提取测试
+
+```python
+# 测试 Agent 的参数提取能力
+# 要求：
+# 1. 从用户输入中提取参数
+# 2. 验证参数完整性
+# 3. 处理缺失参数
+
+def extract_parameters(user_input: str, tool_schema: dict) -> dict:
+    """
+    从用户输入中提取参数
+
+    返回：
+    {
+        "extracted": dict,  # 提取的参数
+        "missing": list,  # 缺失的必填参数
+        "confidence": float  # 提取置信度
+    }
+    """
+    # TODO: 实现代码
+    pass
+
+# 测试
+result = extract_parameters(
+    "搜索北京朝阳区3月15日入住的酒店",
+    TOOLS[0]
+)
+assert result["extracted"]["city"] == "北京"
+```
+
+#### 练习7：多轮对话测试
+
+```python
+# 测试多轮对话能力
+# 要求：
+# 1. 保持对话上下文
+# 2. 正确理解代词指代
+# 3. 维护对话状态
+
+def test_multi_turn_conversation(conversation_flow: list) -> dict:
+    """
+    测试多轮对话
+
+    conversation_flow 格式：
+    [
+        {"user": "搜索北京的酒店", "expected_tool": "search_hotel"},
+        {"user": "第一个多少钱", "expected_tool": "get_price"},
+        {"user": "预订这个", "expected_tool": "book_hotel"}
+    ]
+    """
+    # TODO: 实现代码
+    pass
+
+# 测试
+flow = [
+    {"user": "搜索北京的酒店", "expected_tool": "search_hotel"},
+    {"user": "预订第一个", "expected_tool": "book_hotel"}
+]
+result = test_multi_turn_conversation(flow)
+print(f"通过率: {result['pass_rate']}")
+```
+
+#### 练习8：RAG 上下文构建
+
+```python
+# 实现 RAG 上下文构建
+# 要求：
+# 1. 检索相关文档
+# 2. 格式化上下文
+# 3. 控制上下文长度
+
+def build_rag_context(query: str, documents: list, max_tokens: int = 2000) -> str:
+    """
+    构建 RAG 上下文
+
+    返回格式化的上下文字符串
+    """
+    # TODO: 实现代码
+    pass
+
+# 测试
+context = build_rag_context(
+    "携程是什么？",
+    ["携程是旅行平台", "携程成立于1999年", "携程总部在上海"],
+    max_tokens=500
+)
+print(context)
+```
+
+---
+
+### 进阶练习（9-16）
+
+#### 练习9：RAG 系统完整评估
+
+```python
+# 实现 RAG 系统的完整评估
+# 要求：
+# 1. 检索质量评估
+# 2. 生成质量评估
+# 3. 忠实度评估
+
+class RAGEvaluator:
+    def __init__(self, rag_system, llm_client):
+        self.rag = rag_system
+        self.llm = llm_client
+
+    def evaluate_retrieval(self, test_cases: list) -> dict:
+        """评估检索质量"""
+        # TODO: 实现代码
+        pass
+
+    def evaluate_generation(self, test_cases: list) -> dict:
+        """评估生成质量"""
+        # TODO: 实现代码
+        pass
+
+    def evaluate_faithfulness(self, test_cases: list) -> dict:
+        """评估忠实度（幻觉检测）"""
+        # TODO: 实现代码
+        pass
+
+    def comprehensive_evaluation(self, test_cases: list) -> dict:
+        """综合评估"""
+        # TODO: 实现代码
+        pass
+```
+
+#### 练习10：混合检索实现
+
+```python
+# 实现混合检索（向量+关键词）
+# 要求：
+# 1. 向量相似度检索
+# 2. BM25 关键词检索
+# 3. 结果融合排序
+
+def hybrid_search(query: str, documents: list, top_k: int = 5) -> list:
+    """
+    混合检索
+
+    返回融合排序后的结果
+    """
+    # TODO: 实现代码
+    pass
+
+# 测试
+documents = ["Python编程语言", "Java编程语言", "机器学习入门", "深度学习实践"]
+results = hybrid_search("Python 入门", documents)
+print(results)
+```
+
+#### 练习11：重排序实现
+
+```python
+# 实现检索结果重排序
+# 要求：
+# 1. 使用交叉编码器重排序
+# 2. 提高检索精度
+# 3. 评估重排序效果
+
+def rerank_results(query: str, candidates: list, top_k: int = 5) -> list:
+    """
+    重排序检索结果
+
+    返回重排序后的结果
+    """
+    # TODO: 实现代码
+    pass
+
+# 测试
+candidates = ["相关文档1", "不太相关的文档", "非常相关的文档"]
+reranked = rerank_results("查询问题", candidates, top_k=3)
+```
+
+#### 练习12：Agent 状态管理
+
+```python
+# 实现 Agent 状态管理
+# 要求：
+# 1. 维护对话状态
+# 2. 管理工具调用历史
+# 3. 支持状态恢复
+
+class AgentStateManager:
+    def __init__(self):
+        self.conversation_history = []
+        self.tool_call_history = []
+        self.current_state = {}
+
+    def update_state(self, user_input: str, agent_response: str):
+        """更新状态"""
+        # TODO: 实现代码
+        pass
+
+    def get_context(self) -> dict:
+        """获取当前上下文"""
+        # TODO: 实现代码
+        pass
+
+    def reset(self):
+        """重置状态"""
+        # TODO: 实现代码
+        pass
+```
+
+#### 练习13：工具执行测试
+
+```python
+# 测试工具执行正确性
+# 要求：
+# 1. 模拟工具执行
+# 2. 验证执行结果
+# 3. 处理执行异常
+
+class ToolExecutor:
+    def __init__(self, tools: list):
+        self.tools = {t["name"]: t for t in tools}
+
+    def execute(self, tool_name: str, parameters: dict) -> dict:
+        """
+        执行工具
+
+        返回：
+        {
+            "success": bool,
+            "result": any,
+            "error": str or None
+        }
+        """
+        # TODO: 实现代码
+        pass
+
+    def validate_parameters(self, tool_name: str, parameters: dict) -> bool:
+        """验证参数"""
+        # TODO: 实现代码
+        pass
+```
+
+#### 练习14：AI 生成测试用例
 
 ```python
 # 使用 AI 生成测试用例
-# 评估生成质量
+# 要求：
+# 1. 根据需求生成测试用例
+# 2. 生成边界值用例
+# 3. 生成异常场景用例
+
+class AITestCaseGenerator:
+    def __init__(self, llm_client):
+        self.llm = llm_client
+
+    def generate_functional_cases(self, requirement: str, count: int = 10) -> list:
+        """生成功能测试用例"""
+        # TODO: 实现代码
+        pass
+
+    def generate_edge_cases(self, function_spec: str) -> list:
+        """生成边界值测试用例"""
+        # TODO: 实现代码
+        pass
+
+    def generate_error_cases(self, function_spec: str) -> list:
+        """生成异常测试用例"""
+        # TODO: 实现代码
+        pass
+```
+
+#### 练习15：幻觉检测与缓解
+
+```python
+# 实现 RAG 幻觉检测与缓解
+# 要求：
+# 1. 检测答案是否基于上下文
+# 2. 标记可疑内容
+# 3. 提供缓解策略
+
+def detect_hallucination(answer: str, contexts: list) -> dict:
+    """
+    检测幻觉
+
+    返回：
+    {
+        "has_hallucination": bool,
+        "hallucinated_parts": list,
+        "confidence": float
+    }
+    """
+    # TODO: 实现代码
+    pass
+
+def mitigate_hallucination(answer: str, contexts: list) -> str:
+    """
+    缓解幻觉
+
+    返回修正后的答案
+    """
+    # TODO: 实现代码
+    pass
+```
+
+#### 练习16：Agent 安全性测试
+
+```python
+# 测试 Agent 安全性
+# 要求：
+# 1. 测试有害请求拒绝
+# 2. 测试权限控制
+# 3. 测试数据保护
+
+class AgentSecurityTester:
+    def __init__(self, agent):
+        self.agent = agent
+
+    def test_harmful_requests(self) -> dict:
+        """测试有害请求拒绝"""
+        # TODO: 实现代码
+        pass
+
+    def test_unauthorized_access(self) -> dict:
+        """测试未授权访问"""
+        # TODO: 实现代码
+        pass
+
+    def test_data_protection(self) -> dict:
+        """测试数据保护"""
+        # TODO: 实现代码
+        pass
+```
+
+---
+
+### 综合练习（17-20）
+
+#### 练习17：完整 RAG 测试系统
+
+```python
+# 实现完整的 RAG 测试系统
+# 要求：
+# 1. 集成检索、生成、评估
+# 2. 支持多种测试场景
+# 3. 生成测试报告
+
+class RAGTestSystem:
+    def __init__(self, rag_system, llm_client):
+        self.rag = rag_system
+        self.llm = llm_client
+        self.evaluator = RAGEvaluator(rag_system, llm_client)
+
+    def run_retrieval_tests(self, test_cases: list) -> dict:
+        """运行检索测试"""
+        # TODO: 实现代码
+        pass
+
+    def run_generation_tests(self, test_cases: list) -> dict:
+        """运行生成测试"""
+        # TODO: 实现代码
+        pass
+
+    def run_end_to_end_tests(self, test_cases: list) -> dict:
+        """运行端到端测试"""
+        # TODO: 实现代码
+        pass
+
+    def generate_report(self) -> str:
+        """生成测试报告"""
+        # TODO: 实现代码
+        pass
+```
+
+#### 练习18：完整 Agent 测试系统
+
+```python
+# 实现完整的 Agent 测试系统
+# 要求：
+# 1. 工具调用测试
+# 2. 多轮对话测试
+# 3. 安全性测试
+# 4. 性能测试
+
+class AgentTestSystem:
+    def __init__(self, agent):
+        self.agent = agent
+        self.results = {}
+
+    def test_tool_calling(self, test_cases: list) -> dict:
+        """测试工具调用"""
+        # TODO: 实现代码
+        pass
+
+    def test_multi_turn(self, conversations: list) -> dict:
+        """测试多轮对话"""
+        # TODO: 实现代码
+        pass
+
+    def test_safety(self, harmful_inputs: list) -> dict:
+        """测试安全性"""
+        # TODO: 实现代码
+        pass
+
+    def test_performance(self, test_cases: list) -> dict:
+        """测试性能"""
+        # TODO: 实现代码
+        pass
+
+    def run_all_tests(self) -> dict:
+        """运行所有测试"""
+        # TODO: 实现代码
+        pass
+```
+
+#### 练习19：智能测试报告生成
+
+```python
+# 实现智能测试报告生成
+# 要求：
+# 1. 分析测试结果
+# 2. 识别问题模式
+# 3. 提供改进建议
+# 4. 生成可视化报告
+
+class TestReportGenerator:
+    def __init__(self, llm_client):
+        self.llm = llm_client
+
+    def analyze_results(self, test_results: dict) -> dict:
+        """分析测试结果"""
+        # TODO: 实现代码
+        pass
+
+    def identify_patterns(self, failures: list) -> list:
+        """识别失败模式"""
+        # TODO: 实现代码
+        pass
+
+    def generate_recommendations(self, analysis: dict) -> list:
+        """生成改进建议"""
+        # TODO: 实现代码
+        pass
+
+    def generate_report(self, test_results: dict, output_format: str = "markdown") -> str:
+        """生成测试报告"""
+        # TODO: 实现代码
+        pass
+```
+
+#### 练习20：持续评估流水线
+
+```python
+# 实现持续评估流水线
+# 要求：
+# 1. 定期运行评估
+# 2. 跟踪指标变化
+# 3. 自动告警
+# 4. 生成趋势报告
+
+class ContinuousEvaluationPipeline:
+    def __init__(self, config: dict):
+        self.config = config
+        self.history = []
+
+    def run_evaluation(self) -> dict:
+        """运行评估"""
+        # TODO: 实现代码
+        pass
+
+    def track_metrics(self, results: dict):
+        """跟踪指标"""
+        # TODO: 实现代码
+        pass
+
+    def check_alerts(self, current_results: dict) -> list:
+        """检查告警"""
+        # TODO: 实现代码
+        pass
+
+    def generate_trend_report(self, days: int = 30) -> str:
+        """生成趋势报告"""
+        # TODO: 实现代码
+        pass
+
+    def schedule_evaluation(self, cron_expression: str):
+        """定时调度评估"""
+        # TODO: 实现代码
+        pass
 ```
 
 ---

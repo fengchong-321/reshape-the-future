@@ -660,14 +660,367 @@ minversion = 7.0
 
 ## 四、练习内容
 
-### 练习1：登录测试模块
+### 基础练习（1-8）
+
+#### 练习1：编写第一个测试用例
+
+```python
+# tests/test_basic.py
+# 要求：
+# 1. 创建一个简单的测试文件 test_basic.py
+# 2. 编写 test_add() 函数测试加法
+# 3. 编写 test_string() 函数测试字符串操作
+# 4. 使用 pytest 命令运行测试
+
+def test_add():
+    # 测试加法运算
+    pass
+
+def test_string():
+    # 测试字符串操作：拼接、大小写、切片
+    pass
+```
+
+#### 练习2：断言练习
+
+```python
+# tests/test_assertions.py
+# 要求：编写测试函数，使用以下断言：
+# 1. assert equal - 相等断言
+# 2. assert not equal - 不相等断言
+# 3. assert in / not in - 包含断言
+# 4. assert is None / is not None - None 断言
+# 5. assert isinstance - 类型断言
+# 6. assert True / False - 布尔断言
+
+def test_equality():
+    pass
+
+def test_comparison():
+    pass
+
+def test_membership():
+    pass
+
+def test_none():
+    pass
+
+def test_type():
+    pass
+
+def test_boolean():
+    pass
+```
+
+#### 练习3：异常测试
+
+```python
+# tests/test_exceptions.py
+# 要求：
+# 1. 编写一个 divide(a, b) 函数，b=0 时抛出 ValueError
+# 2. 使用 pytest.raises 测试异常抛出
+# 3. 验证异常消息内容
+
+import pytest
+
+def divide(a, b):
+    # 实现除法，b=0 时抛出 ValueError
+    pass
+
+def test_divide_success():
+    # 测试正常除法
+    pass
+
+def test_divide_by_zero():
+    # 测试除零异常
+    pass
+```
+
+#### 练习4：基础 fixture
+
+```python
+# tests/test_fixture_basic.py
+# 要求：
+# 1. 创建一个 sample_data fixture，返回测试数据字典
+# 2. 创建多个测试函数使用该 fixture
+# 3. 验证 fixture 数据正确性
+
+import pytest
+
+@pytest.fixture
+def sample_data():
+    # 返回测试数据
+    pass
+
+def test_user_name(sample_data):
+    pass
+
+def test_user_email(sample_data):
+    pass
+```
+
+#### 练习5：fixture 资源管理
+
+```python
+# tests/test_fixture_resource.py
+# 要求：
+# 1. 创建 temp_file fixture，在测试前创建临时文件
+# 2. 使用 yield 返回文件路径
+# 3. 测试后自动删除临时文件
+
+import pytest
+import os
+
+@pytest.fixture
+def temp_file():
+    # 创建临时文件
+    # yield 返回文件路径
+    # 删除临时文件
+    pass
+
+def test_write_file(temp_file):
+    # 测试写入文件
+    pass
+
+def test_read_file(temp_file):
+    # 测试读取文件
+    pass
+```
+
+#### 练习6：参数化测试基础
+
+```python
+# tests/test_parametrize_basic.py
+# 要求：
+# 1. 使用 @pytest.mark.parametrize 测试 is_even 函数
+# 2. 测试正数、负数、零
+# 3. 至少提供 5 组测试数据
+
+import pytest
+
+def is_even(n):
+    return n % 2 == 0
+
+@pytest.mark.parametrize("input,expected", [
+    # 填写测试数据
+])
+def test_is_even(input, expected):
+    pass
+```
+
+#### 练习7：标记测试用例
+
+```python
+# tests/test_markers.py
+# 要求：
+# 1. 使用 @pytest.mark.smoke 标记冒烟测试
+# 2. 使用 @pytest.mark.skip 跳过测试
+# 3. 使用 @pytest.mark.xfail 标记预期失败
+# 4. 在 pytest.ini 中注册自定义标记
+
+import pytest
+
+@pytest.mark.smoke
+def test_login_smoke():
+    pass
+
+@pytest.mark.skip(reason="功能未实现")
+def test_future_feature():
+    pass
+
+@pytest.mark.xfail(reason="已知 Bug")
+def test_known_bug():
+    pass
+```
+
+#### 练习8：测试类组织
+
+```python
+# tests/test_class_organization.py
+# 要求：
+# 1. 创建 TestCalculator 测试类
+# 2. 包含 test_add, test_subtract, test_multiply, test_divide 方法
+# 3. 使用类级别的 fixture 提供计算器实例
+
+import pytest
+
+class TestCalculator:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        # 初始化计算器
+        pass
+
+    def test_add(self):
+        pass
+
+    def test_subtract(self):
+        pass
+
+    def test_multiply(self):
+        pass
+
+    def test_divide(self):
+        pass
+```
+
+### 进阶练习（9-16）
+
+#### 练习9：fixture 作用域
+
+```python
+# tests/test_fixture_scope.py
+# 要求：
+# 1. 创建 session 级别 fixture：database_config
+# 2. 创建 module 级别 fixture：test_data
+# 3. 创建 function 级别 fixture：clean_data
+# 4. 观察各 fixture 的执行次数
+
+import pytest
+
+@pytest.fixture(scope="session")
+def database_config():
+    print("\n=== Session 级别：数据库配置 ===")
+    yield {"host": "localhost", "port": 3306}
+
+@pytest.fixture(scope="module")
+def test_data():
+    print("\n=== Module 级别：测试数据 ===")
+    yield [{"id": 1, "name": "user1"}]
+
+@pytest.fixture
+def clean_data():
+    print("\n=== Function 级别：清理数据 ===")
+    yield
+
+def test_case1(database_config, test_data, clean_data):
+    pass
+
+def test_case2(database_config, test_data, clean_data):
+    pass
+```
+
+#### 练习10：conftest.py 共享 fixture
+
+```python
+# tests/conftest.py
+# 要求：
+# 1. 在 conftest.py 中定义共享 fixture
+# 2. 创建 api_client fixture（session 级别）
+# 3. 创建 auth_token fixture 依赖 api_client
+
+import pytest
+
+@pytest.fixture(scope="session")
+def api_client():
+    # 返回模拟的 API 客户端
+    pass
+
+@pytest.fixture
+def auth_token(api_client):
+    # 模拟登录获取 token
+    pass
+
+# tests/test_with_conftest.py
+# 在另一个文件中使用 conftest 中定义的 fixture
+class TestWithConftest:
+    def test_api_call(self, api_client):
+        pass
+
+    def test_authenticated_call(self, auth_token):
+        pass
+```
+
+#### 练习11：多参数化组合
+
+```python
+# tests/test_multi_parametrize.py
+# 要求：
+# 1. 使用多个 @pytest.mark.parametrize 装饰器
+# 2. 测试字符串处理函数：截取、大小写转换
+# 3. 实现笛卡尔积组合测试
+
+import pytest
+
+def process_string(s, operation):
+    """根据操作类型处理字符串"""
+    if operation == "upper":
+        return s.upper()
+    elif operation == "lower":
+        return s.lower()
+    elif operation == "reverse":
+        return s[::-1]
+    return s
+
+@pytest.mark.parametrize("operation", ["upper", "lower", "reverse"])
+@pytest.mark.parametrize("input_str", ["hello", "WORLD", "PyTest"])
+def test_string_operations(input_str, operation):
+    # 测试不同字符串和操作的组合
+    pass
+```
+
+#### 练习12：indirect 参数化
+
+```python
+# tests/test_indirect.py
+# 要求：
+# 1. 创建 user_data fixture，通过 request.param 接收参数
+# 2. 在 fixture 中对数据进行预处理
+# 3. 使用 indirect=True 将参数传递给 fixture
+
+import pytest
+
+@pytest.fixture
+def user_data(request):
+    """预处理用户数据"""
+    data = request.param
+    # 数据预处理：转大写、添加时间戳等
+    return data
+
+@pytest.mark.parametrize("user_data", [
+    {"name": "admin", "role": "admin"},
+    {"name": "user", "role": "guest"},
+], indirect=True)
+def test_with_indirect(user_data):
+    pass
+```
+
+#### 练习13：pytest.ini 配置
+
+```ini
+# pytest.ini
+# 要求：
+# 1. 配置测试路径
+# 2. 配置文件匹配模式
+# 3. 添加默认命令行参数
+# 4. 注册自定义标记
+
+[pytest]
+# 填写配置内容
+```
+
+```python
+# tests/test_with_config.py
+# 使用 pytest.ini 中注册的标记
+import pytest
+
+@pytest.mark.smoke
+def test_smoke():
+    pass
+
+@pytest.mark.regression
+def test_regression():
+    pass
+```
+
+#### 练习14：登录测试模块（完整版）
 
 ```python
 # tests/test_login.py
-# 实现：
+# 要求：
 # 1. 使用 fixture 提供 API 客户端
 # 2. 使用参数化测试多种登录场景
 # 3. 使用标记区分冒烟测试和回归测试
+# 4. 测试成功和失败场景
 
 import pytest
 
@@ -694,19 +1047,20 @@ class TestLogin:
         pass
 ```
 
-### 练习2：用户 CRUD 测试
+#### 练习15：用户 CRUD 测试
 
 ```python
 # tests/test_user.py
-# 实现用户增删改查测试
-# 使用 module 级别的 fixture 管理测试数据
+# 要求：
+# 1. 实现用户增删改查测试
+# 2. 使用 module 级别的 fixture 管理测试数据
+# 3. 每个 CRUD 操作都有独立测试
 
 import pytest
 
 @pytest.fixture(scope="module")
 def test_user():
     """创建测试用户"""
-    # 创建用户
     user = {"id": 1, "name": "Test User"}
     yield user
     # 清理用户
@@ -725,19 +1079,158 @@ class TestUserCRUD:
         pass
 ```
 
-### 练习3：搭建测试项目
+#### 练习16：浮点数和近似值测试
+
+```python
+# tests/test_approx.py
+# 要求：
+# 1. 使用 pytest.approx 测试浮点数
+# 2. 测试相对误差和绝对误差
+# 3. 测试列表和字典中的近似值
+
+import pytest
+
+def test_float_approx():
+    # 测试浮点数近似相等
+    result = 0.1 + 0.2
+    assert result == pytest.approx(0.3)
+
+def test_with_tolerance():
+    # 测试指定误差范围
+    pass
+
+def test_list_approx():
+    # 测试列表中的浮点数
+    pass
+
+def test_dict_approx():
+    # 测试字典中的浮点数
+    pass
+```
+
+### 综合练习（17-20）
+
+#### 练习17：搭建完整测试项目
 
 ```
-# 创建完整项目结构
+# 要求：创建完整项目结构
 pytest_demo/
-├── pytest.ini
-├── conftest.py
+├── pytest.ini              # 配置文件
+├── conftest.py             # 全局 fixture
 ├── tests/
 │   ├── __init__.py
-│   ├── test_login.py
-│   ├── test_user.py
-│   └── test_order.py
-└── requirements.txt
+│   ├── conftest.py         # 测试级 fixture
+│   ├── test_login.py       # 登录测试
+│   ├── test_user.py        # 用户测试
+│   └── test_order.py       # 订单测试
+├── config/
+│   └── settings.py         # 配置
+└── requirements.txt        # 依赖
+```
+
+```python
+# pytest.ini 配置示例
+# conftest.py fixture 示例
+# 至少编写 15 个测试用例
+```
+
+#### 练习18：数据驱动测试框架
+
+```python
+# tests/test_data_driven.py
+# 要求：
+# 1. 从 JSON 文件读取测试数据
+# 2. 动态生成测试用例
+# 3. 支持数据文件的扩展
+
+import pytest
+import json
+
+def load_test_data(filepath):
+    """从 JSON 文件加载测试数据"""
+    pass
+
+# test_data.json 内容示例：
+# [
+#   {"input": 1, "expected": 2},
+#   {"input": 5, "expected": 10}
+# ]
+
+@pytest.mark.parametrize("data", load_test_data("tests/data/test_cases.json"))
+def test_data_driven(data):
+    pass
+```
+
+#### 练习19：命令行参数测试
+
+```python
+# conftest.py
+# 要求：
+# 1. 添加 --env 命令行参数
+# 2. 根据参数加载不同配置
+# 3. 在测试中使用配置
+
+import pytest
+
+def pytest_addoption(parser):
+    parser.addoption("--env", default="test", help="测试环境")
+
+@pytest.fixture(scope="session")
+def env(request):
+    return request.config.getoption("--env")
+
+@pytest.fixture(scope="session")
+def config(env):
+    # 根据环境返回配置
+    configs = {
+        "dev": {"url": "http://localhost:8000"},
+        "test": {"url": "https://test.example.com"},
+        "prod": {"url": "https://example.com"}
+    }
+    return configs[env]
+
+# tests/test_with_env.py
+def test_with_config(config):
+    # 使用环境配置
+    pass
+```
+
+#### 练习20：综合测试套件
+
+```python
+# tests/test_suite.py
+# 要求：整合所学知识，完成以下任务：
+# 1. 使用 conftest.py 定义共享 fixture
+# 2. 使用多种作用域的 fixture
+# 3. 使用参数化测试
+# 4. 使用标记分类测试
+# 5. 使用 pytest.ini 配置
+# 6. 测试异常和边界情况
+
+import pytest
+
+# 定义测试类和测试函数
+class TestComplete:
+    """综合测试套件"""
+
+    @pytest.mark.smoke
+    def test_smoke_suite(self, api_client):
+        pass
+
+    @pytest.mark.parametrize("case", [
+        {"input": "valid", "expected": True},
+        {"input": "invalid", "expected": False},
+    ])
+    def test_parameterized_suite(self, case):
+        pass
+
+    def test_exception_handling(self):
+        with pytest.raises(ValueError):
+            raise ValueError("测试异常")
+
+# 运行命令：
+# pytest -v --env=test -m smoke
+# pytest -v --env=test tests/test_suite.py
 ```
 
 ---

@@ -635,12 +635,502 @@ def page(browser: Browser, browser_context_args):
 
 ---
 
-## 四、本周小结
+## 四、练习内容
 
-1. **Playwright**：比 Selenium 更现代的选择
-2. **定位器**：优先语义化定位
-3. **Page Object**：测试代码可维护性的关键
+### 基础练习（1-8）
 
-### 下周预告
+**练习1：环境搭建与基础脚本**
 
-第19周学习 Appium 移动端测试。
+完成以下任务：
+1. 安装 Playwright 和浏览器
+2. 编写第一个测试脚本，访问 https://example.com
+3. 验证页面标题是否包含 "Example Domain"
+
+```python
+from playwright.sync_api import sync_playwright
+
+def test_first_script():
+    with sync_playwright() as p:
+        # 请实现
+        pass
+```
+
+**练习2：定位器使用**
+
+使用不同的定位方式找到以下元素：
+1. 使用 role 定位器找到一个按钮
+2. 使用 label 定位器找到一个输入框
+3. 使用 text 定位器找到一个链接
+4. 使用 test id 定位器找到一个元素
+
+```python
+def test_locators(page):
+    # 使用 get_by_role 定位按钮
+    button = page.___
+
+    # 使用 get_by_label 定位输入框
+    input_field = page.___
+
+    # 使用 get_by_text 定位链接
+    link = page.___
+
+    # 使用 get_by_test_id 定位元素
+    element = page.___
+```
+
+**练习3：表单操作练习**
+
+编写测试脚本完成以下操作：
+1. 打开登录页面
+2. 填写用户名和密码
+3. 勾选"记住我"复选框
+4. 点击登录按钮
+5. 验证登录成功
+
+```python
+def test_login_form(page):
+    page.goto("https://example.com/login")
+
+    # 填写用户名
+    # 填写密码
+    # 勾选复选框
+    # 点击登录
+    # 验证结果
+    pass
+```
+
+**练习4：下拉框与文件上传**
+
+编写测试脚本：
+1. 选择下拉框中的某个选项
+2. 上传一个文件
+3. 验证操作结果
+
+```python
+def test_select_and_upload(page):
+    # 选择下拉框选项
+    page.select_option("#country", "china")
+
+    # 上传文件
+    page.set_input_files("#file", "/path/to/file.txt")
+
+    # 验证
+    pass
+```
+
+**练习5：等待策略**
+
+使用不同的等待方式：
+1. 等待元素出现
+2. 等待元素可点击
+3. 等待导航完成
+4. 等待网络请求完成
+
+```python
+def test_waiting_strategies(page):
+    # 等待元素出现
+    page.___
+
+    # 等待元素可点击
+    page.___
+
+    # 等待导航
+    with page.___:
+        page.click("a")
+
+    # 等待请求
+    with page.___ as response:
+        page.click("button")
+```
+
+**练习6：断言练习**
+
+使用 Playwright 的 expect 断言：
+1. 验证元素可见
+2. 验证文本内容
+3. 验证输入框的值
+4. 验证元素数量
+5. 验证页面 URL
+
+```python
+from playwright.sync_api import expect
+
+def test_assertions(page):
+    page.goto("https://example.com")
+
+    # 验证元素可见
+    expect(page.locator("#element")).___
+
+    # 验证文本
+    expect(page.locator("#title")).___
+
+    # 验证输入框值
+    expect(page.locator("#input")).___
+
+    # 验证元素数量
+    expect(page.locator(".item")).___
+
+    # 验证 URL
+    expect(page).___
+```
+
+**练习7：键盘和鼠标操作**
+
+编写测试脚本：
+1. 模拟键盘输入
+2. 模拟按键组合（Ctrl+A, Enter 等）
+3. 模拟鼠标移动和点击
+4. 模拟拖拽操作
+
+```python
+def test_keyboard_mouse(page):
+    # 键盘输入
+    page.keyboard.___
+
+    # 按键组合
+    page.press("#input", "Control+A")
+
+    # 鼠标操作
+    page.mouse.___
+
+    # 拖拽
+    page.___
+```
+
+**练习8：多页面操作**
+
+编写测试脚本：
+1. 打开新标签页
+2. 在新标签页中操作
+3. 切换回原标签页
+4. 获取所有页面列表
+
+```python
+def test_multiple_pages(page, context):
+    page.goto("https://example.com")
+
+    # 打开新标签页
+    with context.___ as new_page:
+        page.click("a[target=_blank]")
+
+    # 在新标签页操作
+    # 切换回原标签页
+    # 获取所有页面
+    pass
+```
+
+---
+
+### 进阶练习（9-16）
+
+**练习9：iframe 操作**
+
+编写测试脚本处理 iframe：
+1. 进入 iframe
+2. 在 iframe 中定位元素
+3. 操作 iframe 中的表单
+4. 处理嵌套 iframe
+
+```python
+def test_iframe(page):
+    page.goto("https://example.com/iframe-demo")
+
+    # 进入 iframe
+    frame = page.___
+
+    # 在 iframe 中操作
+    frame.___
+
+    # 处理嵌套 iframe
+    inner_frame = frame.___
+```
+
+**练习10：请求拦截与 Mock**
+
+编写测试脚本：
+1. 拦截 API 请求
+2. 修改请求内容
+3. Mock API 响应
+4. 验证请求参数
+
+```python
+def test_request_intercept(page):
+    # 拦截并 Mock 响应
+    page.route("**/api/users", lambda route: route.___)
+
+    # 拦截并修改请求
+    def handle_route(route):
+        # 修改请求
+        route.___
+
+    page.route("**/*", handle_route)
+```
+
+**练习11：对话框处理**
+
+编写测试脚本处理各种对话框：
+1. alert 对话框
+2. confirm 对话框
+3. prompt 对话框
+4. 验证对话框消息
+
+```python
+def test_dialogs(page):
+    # 处理 alert
+    page.on("dialog", lambda dialog: ___)
+
+    # 处理 confirm
+    # 处理 prompt
+    pass
+```
+
+**练习12：Page Object 模式实现**
+
+为登录页面实现 Page Object 模式：
+
+```python
+# pages/login_page.py
+from playwright.sync_api import Page, expect
+
+class LoginPage:
+    def __init__(self, page: Page):
+        self.page = page
+        # 定义定位器
+        self.username_input = page.___
+        self.password_input = page.___
+        self.login_button = page.___
+
+    def navigate(self):
+        # 导航到登录页
+        pass
+
+    def login(self, username: str, password: str):
+        # 执行登录
+        pass
+
+    def expect_error(self, message: str):
+        # 验证错误消息
+        pass
+
+# 测试用例
+def test_login_with_po(page):
+    login_page = LoginPage(page)
+    login_page.navigate()
+    login_page.login("admin", "password")
+```
+
+**练习13：数据驱动测试**
+
+使用 pytest 的参数化实现数据驱动测试：
+
+```python
+import pytest
+
+@pytest.mark.parametrize("username,password,expected", [
+    ("admin", "123456", "success"),
+    ("admin", "wrong", "密码错误"),
+    ("", "123456", "请输入用户名"),
+    ("admin", "", "请输入密码"),
+])
+def test_login_data_driven(page, username, password, expected):
+    login_page = LoginPage(page)
+    login_page.navigate()
+    login_page.login(username, password)
+
+    if expected == "success":
+        # 验证登录成功
+        pass
+    else:
+        # 验证错误消息
+        pass
+```
+
+**练习14：截图和视频录制**
+
+编写测试脚本实现：
+1. 手动截图
+2. 失败时自动截图
+3. 录制测试视频
+4. 保存测试追踪
+
+```python
+def test_screenshot_video(page):
+    # 手动截图
+    page.___
+
+    # 配置 conftest.py 实现失败截图和视频
+    # pytest.ini 配置：
+    # --video=retain-on-failure
+    # --screenshot=only-on-failure
+    # --trace=retain-on-failure
+    pass
+```
+
+**练习15：并行执行配置**
+
+配置 pytest 实现测试并行执行：
+
+```python
+# conftest.py 配置
+# pytest.ini 配置
+# 运行命令
+
+"""
+1. 安装 pytest-xdist
+2. 配置 pytest.ini
+3. 实现并行执行
+4. 处理测试隔离问题
+"""
+
+# 运行命令示例：
+# pytest -n 4 tests/  # 4 个进程并行
+```
+
+**练习16：设备模拟**
+
+编写测试脚本模拟移动设备：
+1. 模拟 iPhone
+2. 模拟地理位置
+3. 模拟离线状态
+4. 验证响应式布局
+
+```python
+def test_mobile_simulation(browser):
+    # 获取 iPhone 配置
+    iphone = playwright.devices["iPhone 13"]
+
+    # 创建移动端上下文
+    context = browser.___
+
+    # 模拟地理位置
+    context.___
+
+    # 模拟离线
+    context.___
+
+    page = context.new_page()
+    page.goto("https://example.com")
+```
+
+---
+
+### 综合练习（17-20）
+
+**练习17：完整的电商购物流程测试**
+
+使用 Page Object 模式实现电商购物流程测试：
+1. 用户登录
+2. 搜索商品
+3. 添加到购物车
+4. 修改购物车数量
+5. 结算下单
+6. 验证订单状态
+
+```python
+# 需要实现的 Page Objects：
+# - LoginPage
+# - HomePage
+# - SearchPage
+# - ProductPage
+# - CartPage
+# - CheckoutPage
+# - OrderPage
+
+class TestShopping:
+    def test_complete_shopping_flow(self, page):
+        # 实现完整的购物流程
+        pass
+```
+
+**练习18：API 与 UI 混合测试**
+
+编写测试脚本实现：
+1. 通过 API 创建测试数据
+2. UI 验证数据显示
+3. UI 执行操作
+4. API 验证数据变化
+
+```python
+def test_api_ui_hybrid(page, request):
+    # 通过 API 创建数据
+    api_response = request.post("/api/users", json={"name": "test"})
+
+    # UI 验证
+    page.goto("/users")
+    expect(page.locator(".user-name")).to_have_text("test")
+
+    # UI 操作
+    page.click(".delete-button")
+
+    # API 验证
+    users = request.get("/api/users").json()
+    assert "test" not in [u["name"] for u in users]
+```
+
+**练习19：性能测试集成**
+
+编写测试脚本监控页面性能：
+1. 测量页面加载时间
+2. 监控网络请求
+3. 检测性能指标（FCP, LCP 等）
+4. 生成性能报告
+
+```python
+def test_performance(page):
+    # 监控页面加载
+    # 收集性能指标
+    # 验证性能标准
+
+    metrics = page.evaluate("""() => {
+        return {
+            loadTime: window.performance.timing.loadEventEnd -
+                      window.performance.timing.navigationStart,
+            domReady: window.performance.timing.domContentLoadedEventEnd -
+                      window.performance.timing.navigationStart
+        }
+    }""")
+
+    assert metrics["loadTime"] < 3000  # 3秒内加载完成
+```
+
+**练习20：CI/CD 集成配置**
+
+完成以下 CI/CD 配置：
+1. 编写 GitHub Actions 配置
+2. 配置测试报告生成
+3. 配置失败通知
+4. 配置测试结果归档
+
+```yaml
+# .github/workflows/playwright.yml
+# 请完成 GitHub Actions 配置文件
+
+name: Playwright Tests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # 请完成配置
+```
+
+```python
+# pytest.ini 完整配置
+"""
+[pytest]
+addopts =
+    --headed
+    --browser chromium
+    --browser firefox
+    --slowmo=100
+    --video=retain-on-failure
+    --screenshot=only-on-failure
+    --html=report.html
+    --self-contained-html
+testpaths = tests
+"""

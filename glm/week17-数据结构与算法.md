@@ -680,22 +680,412 @@ def heap_sort(arr):
 
 ---
 
-## 四、本周练习清单
+## 四、练习内容
 
-### 必刷题目
+### 基础练习（1-8）
 
-| 题号 | 题目 | 难度 |
-|------|------|------|
-| 1 | 两数之和 | 简单 |
-| 3 | 无重复字符的最长子串 | 中等 |
-| 15 | 三数之和 | 中等 |
-| 20 | 有效的括号 | 简单 |
-| 21 | 合并两个有序链表 | 简单 |
-| 104 | 二叉树的最大深度 | 简单 |
-| 141 | 环形链表 | 简单 |
-| 146 | LRU 缓存 | 中等 |
-| 206 | 反转链表 | 简单 |
-| 236 | 二叉树的最近公共祖先 | 中等 |
+**练习1：两数之和（LeetCode 1）**
+
+给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出和为目标值的那两个整数，并返回它们的数组下标。
+
+```python
+def two_sum(nums, target):
+    """
+    示例：
+    输入：nums = [2, 7, 11, 15], target = 9
+    输出：[0, 1]
+    """
+    # 请实现
+    pass
+```
+
+**练习2：反转链表（LeetCode 206）**
+
+给你单链表的头节点 head，请你反转链表，并返回反转后的链表。
+
+```python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def reverse_list(head):
+    """
+    输入：1 -> 2 -> 3 -> 4 -> 5
+    输出：5 -> 4 -> 3 -> 2 -> 1
+    """
+    # 请实现
+    pass
+```
+
+**练习3：有效的括号（LeetCode 20）**
+
+给定一个只包括 '('，')'，'{'，'}'，'['，']' 的字符串 s，判断字符串是否有效。
+
+```python
+def is_valid(s):
+    """
+    示例：
+    输入：s = "()[]{}"
+    输出：true
+    输入：s = "([)]"
+    输出：false
+    """
+    # 请实现
+    pass
+```
+
+**练习4：无重复字符的最长子串（LeetCode 3）**
+
+给定一个字符串 s，请你找出其中不含有重复字符的最长子串的长度。
+
+```python
+def length_of_longest_substring(s):
+    """
+    示例：
+    输入：s = "abcabcbb"
+    输出：3（"abc"）
+    """
+    # 请实现（使用滑动窗口）
+    pass
+```
+
+**练习5：二叉树的最大深度（LeetCode 104）**
+
+给定二叉树，找出其最大深度。
+
+```python
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def max_depth(root):
+    """
+    示例：
+        3
+       / \
+      9  20
+        /  \
+       15   7
+    输出：3
+    """
+    # 请实现（递归和迭代两种方式）
+    pass
+```
+
+**练习6：合并两个有序链表（LeetCode 21）**
+
+将两个升序链表合并为一个新的升序链表并返回。
+
+```python
+def merge_two_lists(l1, l2):
+    """
+    输入：1 -> 2 -> 4, 1 -> 3 -> 4
+    输出：1 -> 1 -> 2 -> 3 -> 4 -> 4
+    """
+    # 请实现
+    pass
+```
+
+**练习7：环形链表（LeetCode 141）**
+
+给定链表，判断链表中是否有环。
+
+```python
+def has_cycle(head):
+    """
+    使用快慢指针实现
+    """
+    # 请实现
+    pass
+```
+
+**练习8：三数之和（LeetCode 15）**
+
+给你一个整数数组 nums，判断是否存在三元组 [nums[i], nums[j], nums[k]] 满足 i != j、i != k 且 j != k，同时还满足 nums[i] + nums[j] + nums[k] == 0。
+
+```python
+def three_sum(nums):
+    """
+    示例：
+    输入：nums = [-1, 0, 1, 2, -1, -4]
+    输出：[[-1, -1, 2], [-1, 0, 1]]
+    """
+    # 请实现（使用双指针）
+    pass
+```
+
+---
+
+### 进阶练习（9-16）
+
+**练习9：LRU 缓存机制（LeetCode 146）**
+
+运用你所掌握的数据结构，设计和实现一个 LRU (最近最少使用) 缓存机制。
+
+```python
+class LRUCache:
+    def __init__(self, capacity: int):
+        """
+        初始化 LRU 缓存
+        """
+        pass
+
+    def get(self, key: int) -> int:
+        """
+        如果关键字存在于缓存中，则返回关键字的值，否则返回 -1
+        """
+        pass
+
+    def put(self, key: int, value: int) -> None:
+        """
+        如果关键字存在，则变更其数据值；如果不存在，则插入该组「关键字-值」。
+        当缓存容量达到上限时，删除最久未使用的数据。
+        """
+        pass
+```
+
+**练习10：二叉树的最近公共祖先（LeetCode 236）**
+
+给定一个二叉树, 找到该树中两个指定节点的最近公共祖先。
+
+```python
+def lowest_common_ancestor(root, p, q):
+    """
+    示例：
+        3
+       / \
+      5   1
+     / \ / \
+    6  2 0  8
+      / \
+     7   4
+    p = 5, q = 1，输出：3
+    """
+    # 请实现
+    pass
+```
+
+**练习11：最长连续序列（LeetCode 128）**
+
+给定一个未排序的整数数组 nums，找出数字连续的最长序列的长度。要求算法的时间复杂度为 O(n)。
+
+```python
+def longest_consecutive(nums):
+    """
+    示例：
+    输入：nums = [100, 4, 200, 1, 3, 2]
+    输出：4（最长连续序列是 [1, 2, 3, 4]）
+    """
+    # 请实现（使用哈希表）
+    pass
+```
+
+**练习12：字母异位词分组（LeetCode 49）**
+
+给你一个字符串数组，请你将字母异位词组合在一起。可以按任意顺序返回结果列表。
+
+```python
+def group_anagrams(strs):
+    """
+    示例：
+    输入：strs = ["eat", "tea", "tan", "ate", "nat", "bat"]
+    输出：[["bat"], ["nat", "tan"], ["ate", "eat", "tea"]]
+    """
+    # 请实现
+    pass
+```
+
+**练习13：每日温度（LeetCode 739）**
+
+给定一个整数数组 temperatures，表示每天的温度，返回一个数组 answer，使得 answer[i] 是在第 i 天之后，才会有更高的温度。
+
+```python
+def daily_temperatures(temperatures):
+    """
+    示例：
+    输入：temperatures = [73, 74, 75, 71, 69, 72, 76, 73]
+    输出：[1, 1, 4, 2, 1, 1, 0, 0]
+    """
+    # 请实现（使用单调栈）
+    pass
+```
+
+**练习14：删除链表的倒数第 N 个节点（LeetCode 19）**
+
+给你一个链表，删除链表的倒数第 n 个节点，并且返回链表的头节点。
+
+```python
+def remove_nth_from_end(head, n):
+    """
+    示例：
+    输入：head = [1, 2, 3, 4, 5], n = 2
+    输出：[1, 2, 3, 5]
+    """
+    # 请实现（使用快慢指针）
+    pass
+```
+
+**练习15：快速排序实现**
+
+实现快速排序算法，并分析其时间复杂度和空间复杂度。
+
+```python
+def quick_sort(arr):
+    """
+    示例：
+    输入：[3, 6, 8, 10, 1, 2, 1]
+    输出：[1, 1, 2, 3, 6, 8, 10]
+    """
+    # 请实现
+    pass
+```
+
+**练习16：二叉树的层序遍历（LeetCode 102）**
+
+给你二叉树的根节点 root，返回其节点值的层序遍历。
+
+```python
+def level_order(root):
+    """
+    示例：
+        3
+       / \
+      9  20
+        /  \
+       15   7
+    输出：[[3], [9, 20], [15, 7]]
+    """
+    # 请实现（使用 BFS）
+    pass
+```
+
+---
+
+### 综合练习（17-20）
+
+**练习17：实现一个最小栈（LeetCode 155）**
+
+设计一个支持 push、pop、top 操作，并能在常数时间内检索到最小元素的栈。
+
+```python
+class MinStack:
+    def __init__(self):
+        pass
+
+    def push(self, val: int) -> None:
+        pass
+
+    def pop(self) -> None:
+        pass
+
+    def top(self) -> int:
+        pass
+
+    def getMin(self) -> int:
+        pass
+
+# 测试用例
+# minStack = MinStack()
+# minStack.push(-2)
+# minStack.push(0)
+# minStack.push(-3)
+# minStack.getMin()  # 返回 -3
+# minStack.pop()
+# minStack.top()     # 返回 0
+# minStack.getMin()  # 返回 -2
+```
+
+**练习18：设计一个支持增删改查的数据结构**
+
+设计一个数据结构，支持以下操作，且时间复杂度为 O(1)：
+- insert(val)：当元素 val 不存在时，向集合中插入该项
+- remove(val)：当元素 val 存在时，从集合中移除该项
+- getRandom：随机返回现有集合中的一项
+
+```python
+import random
+
+class RandomizedSet:
+    def __init__(self):
+        pass
+
+    def insert(self, val: int) -> bool:
+        pass
+
+    def remove(self, val: int) -> bool:
+        pass
+
+    def getRandom(self) -> int:
+        pass
+```
+
+**练习19：综合链表操作**
+
+实现一个支持以下操作的链表类：
+- addAtHead(val)：在链表头部添加节点
+- addAtTail(val)：在链表尾部添加节点
+- addAtIndex(index, val)：在指定位置添加节点
+- deleteAtIndex(index)：删除指定位置的节点
+- get(index)：获取指定位置的值
+
+```python
+class MyLinkedList:
+    def __init__(self):
+        pass
+
+    def get(self, index: int) -> int:
+        pass
+
+    def addAtHead(self, val: int) -> None:
+        pass
+
+    def addAtTail(self, val: int) -> None:
+        pass
+
+    def addAtIndex(self, index: int, val: int) -> None:
+        pass
+
+    def deleteAtIndex(self, index: int) -> None:
+        pass
+```
+
+**练习20：算法复杂度分析练习**
+
+分析以下代码的时间复杂度和空间复杂度：
+
+```python
+# 代码1
+def func1(n):
+    result = 0
+    for i in range(n):
+        for j in range(n):
+            result += i * j
+    return result
+
+# 代码2
+def func2(n):
+    if n <= 1:
+        return n
+    return func2(n - 1) + func2(n - 2)
+
+# 代码3
+def func3(n):
+    result = []
+    for i in range(n):
+        result = result + [i]  # 注意：列表拼接
+    return result
+
+# 代码4
+def func4(n):
+    while n > 1:
+        n = n // 2
+    return n
+```
+
+请写出每个函数的时间复杂度和空间复杂度，并说明理由。
 
 ---
 

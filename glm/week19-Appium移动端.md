@@ -662,12 +662,617 @@ class TestLogin:
 
 ---
 
-## 四、本周小结
+## 四、练习内容
 
-1. **Appium**：移动端自动化标准
-2. **手势操作**：模拟用户真实操作
-3. **Page Object**：提高测试可维护性
+### 基础练习（1-8）
 
-### 下周预告
+**练习1：环境搭建与基础脚本**
 
-第20周综合项目实战。
+完成以下任务：
+1. 安装 Appium 和相关依赖
+2. 安装 UiAutomator2 驱动
+3. 编写第一个 Android 测试脚本
+4. 启动应用并验证包名
+
+```python
+from appium import webdriver
+from appium.options.android import UiAutomator2Options
+
+def test_first_appium_script():
+    """第一个 Appium 测试脚本"""
+    options = UiAutomator2Options()
+    # 请配置以下参数：
+    # options.platform_name = ?
+    # options.device_name = ?
+    # options.app = ?
+    # options.app_package = ?
+    # options.app_activity = ?
+
+    driver = webdriver.Remote("http://localhost:4723", options=options)
+
+    # 验证应用已启动
+    assert driver.current_package == "com.example.app"
+
+    driver.quit()
+```
+
+**练习2：元素定位练习**
+
+使用不同的定位方式找到以下元素：
+1. 通过 ID 定位
+2. 通过 Accessibility ID 定位
+3. 通过 XPath 定位
+4. 通过 UIAutomator 定位
+
+```python
+from appium.webdriver.common.appiumby import AppiumBy
+
+def test_element_location(driver):
+    # 通过 ID 定位
+    element1 = driver.find_element(AppiumBy.___, "com.example:id/username")
+
+    # 通过 Accessibility ID 定位
+    element2 = driver.find_element(AppiumBy.___, "登录按钮")
+
+    # 通过 XPath 定位
+    element3 = driver.find_element(AppiumBy.___,
+        "//android.widget.EditText[@text='用户名']")
+
+    # 通过 UIAutomator 定位
+    element4 = driver.find_element(AppiumBy.___,
+        'new UiSelector().text("登录")')
+```
+
+**练习3：基本操作练习**
+
+编写测试脚本完成以下操作：
+1. 输入文本
+2. 点击按钮
+3. 清除文本
+4. 获取元素文本
+5. 判断元素是否显示
+
+```python
+def test_basic_operations(driver):
+    # 输入用户名
+    username = driver.find_element(AppiumBy.ID, "com.example:id/username")
+    username.___("admin")
+
+    # 输入密码
+    password = driver.find_element(AppiumBy.ID, "com.example:id/password")
+    password.___("123456")
+
+    # 点击登录
+    login_btn = driver.find_element(AppiumBy.ID, "com.example:id/login")
+    login_btn.___
+
+    # 获取欢迎文本
+    welcome = driver.find_element(AppiumBy.ID, "com.example:id/welcome")
+    text = welcome.___
+
+    # 验证元素显示
+    assert welcome.___
+```
+
+**练习4：等待策略练习**
+
+使用不同的等待方式：
+1. 隐式等待
+2. 显式等待元素出现
+3. 显式等待元素可点击
+4. 自定义等待条件
+
+```python
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+def test_waiting_strategies(driver):
+    # 隐式等待
+    driver.implicitly_wait(10)
+
+    # 显式等待元素出现
+    wait = WebDriverWait(driver, 10)
+    element = wait.until(
+        EC.presence_of_element_located((AppiumBy.ID, "com.example:id/element"))
+    )
+
+    # 显式等待元素可点击
+    clickable = wait.until(
+        EC.element_to_be_clickable((AppiumBy.ID, "com.example:id/button"))
+    )
+
+    # 自定义等待条件
+    def text_equals(driver):
+        el = driver.find_element(AppiumBy.ID, "com.example:id/status")
+        return el.text == "成功"
+
+    wait.until(text_equals)
+```
+
+**练习5：滑动操作练习**
+
+编写测试脚本实现以下滑动：
+1. 向上滑动
+2. 向下滑动
+3. 向左滑动
+4. 向右滑动
+
+```python
+def test_swipe_operations(driver):
+    # 获取屏幕尺寸
+    size = driver.get_window_size()
+    width = size['width']
+    height = size['height']
+
+    # 向上滑动（内容向下）
+    driver.swide(___, ___, ___, ___, 500)
+
+    # 向下滑动（内容向上）
+    driver.swide(___, ___, ___, ___, 500)
+
+    # 向左滑动
+    driver.swide(___, ___, ___, ___, 500)
+
+    # 向右滑动
+    driver.swide(___, ___, ___, ___, 500)
+```
+
+**练习6：表单操作练习**
+
+编写测试脚本完成以下表单操作：
+1. 输入框操作
+2. 复选框勾选
+3. 单选按钮选择
+4. 下拉框选择
+
+```python
+def test_form_operations(driver):
+    # 输入文本
+    driver.find_element(AppiumBy.ID, "name").send_keys("张三")
+
+    # 勾选复选框
+    checkbox = driver.find_element(AppiumBy.ID, "agree")
+    if not checkbox.is_selected():
+        checkbox.click()
+
+    # 选择单选按钮
+    driver.find_element(AppiumBy.ID, "gender_male").click()
+
+    # 选择下拉框（通过文本点击）
+    driver.find_element(AppiumBy.XPATH,
+        "//android.widget.TextView[@text='北京']").click()
+```
+
+**练习7：键盘操作练习**
+
+编写测试脚本实现以下键盘操作：
+1. 隐藏键盘
+2. 按返回键
+3. 按回车键
+4. 按菜单键
+
+```python
+def test_keyboard_operations(driver):
+    # 输入完成后隐藏键盘
+    driver.find_element(AppiumBy.ID, "search").send_keys("test")
+    driver.___
+
+    # 按返回键
+    driver.press_keycode(___)  # KEYCODE_BACK = 4
+
+    # 按回车键
+    driver.press_keycode(___)  # KEYCODE_ENTER = 66
+
+    # 按菜单键
+    driver.press_keycode(___)  # KEYCODE_MENU = 82
+```
+
+**练习8：应用操作练习**
+
+编写测试脚本实现以下应用操作：
+1. 安装应用
+2. 检查应用是否安装
+3. 启动应用
+4. 关闭应用
+5. 后台运行应用
+
+```python
+def test_app_operations(driver):
+    # 检查应用是否安装
+    is_installed = driver.___("com.example.app")
+    assert is_installed
+
+    # 关闭应用
+    driver.___
+
+    # 启动应用
+    driver.___("com.example.app")
+
+    # 后台运行 5 秒
+    driver.___(5)
+
+    # 卸载应用（谨慎使用）
+    # driver.remove_app("com.example.app")
+```
+
+---
+
+### 进阶练习（9-16）
+
+**练习9：滚动到元素**
+
+编写测试脚本实现滚动到指定元素：
+
+```python
+def test_scroll_to_element(driver):
+    # 使用 UIAutomator 滚动到元素
+    element = driver.find_element(
+        AppiumBy.ANDROID_UIAUTOMATOR,
+        'new UiScrollable(new UiSelector().scrollable(true))' +
+        '.scrollIntoView(new UiSelector().text("目标元素"))'
+    )
+
+    # 验证元素可见
+    assert element.is_displayed()
+```
+
+**练习10：长按操作**
+
+编写测试脚本实现长按操作：
+
+```python
+from appium.webdriver.common.touch_action import TouchAction
+
+def test_long_press(driver):
+    element = driver.find_element(AppiumBy.ID, "item")
+
+    # 创建 TouchAction
+    action = TouchAction(driver)
+
+    # 长按元素
+    action.long_press(element).perform()
+
+    # 验证长按后的操作菜单出现
+    menu = driver.find_element(AppiumBy.ID, "context_menu")
+    assert menu.is_displayed()
+```
+
+**练习11：拖拽操作**
+
+编写测试脚本实现拖拽操作：
+
+```python
+def test_drag_and_drop(driver):
+    source = driver.find_element(AppiumBy.ID, "source")
+    target = driver.find_element(AppiumBy.ID, "target")
+
+    # 使用 TouchAction 实现拖拽
+    action = TouchAction(driver)
+    action.long_press(source).move_to(target).release().perform()
+
+    # 验证拖拽成功
+    assert source.location != target.location
+```
+
+**练习12：Toast 消息获取**
+
+编写测试脚本获取 Toast 消息：
+
+```python
+def test_get_toast(driver):
+    # 执行触发 Toast 的操作
+    driver.find_element(AppiumBy.ID, "submit").click()
+
+    # 获取 Toast 消息
+    toast = driver.find_element(
+        AppiumBy.XPATH,
+        "//android.widget.Toast"
+    )
+
+    # 验证 Toast 内容
+    assert "操作成功" in toast.text
+```
+
+**练习13：WebView 操作**
+
+编写测试脚本处理 WebView：
+
+```python
+def test_webview(driver):
+    # 获取所有上下文
+    contexts = driver.___
+    print("Available contexts:", contexts)
+
+    # 切换到 WebView
+    driver.switch_to.___("WEBVIEW_com.example.app")
+
+    # 在 WebView 中操作（使用 Selenium 定位方式）
+    from selenium.webdriver.common.by import By
+    driver.find_element(By.ID, "username").send_keys("admin")
+
+    # 切换回原生应用
+    driver.switch_to.___("NATIVE_APP")
+```
+
+**练习14：Page Object 模式实现**
+
+为登录页面实现 Page Object 模式：
+
+```python
+# pages/base_page.py
+class BasePage:
+    def __init__(self, driver):
+        self.driver = driver
+
+    def find_by_id(self, id_):
+        return self.driver.find_element(AppiumBy.ID, id_)
+
+    def swipe_up(self):
+        size = self.driver.get_window_size()
+        x = size['width'] // 2
+        y1 = int(size['height'] * 0.8)
+        y2 = int(size['height'] * 0.2)
+        self.driver.swipe(x, y1, x, y2, 500)
+
+# pages/login_page.py
+class LoginPage(BasePage):
+    USERNAME_ID = "com.example:id/username"
+    PASSWORD_ID = "com.example:id/password"
+    LOGIN_BTN_ID = "com.example:id/login"
+
+    def login(self, username, password):
+        self.find_by_id(self.USERNAME_ID).send_keys(username)
+        self.find_by_id(self.PASSWORD_ID).send_keys(password)
+        self.find_by_id(self.LOGIN_BTN_ID).click()
+        return self
+
+# tests/test_login.py
+class TestLogin:
+    def test_login_success(self, driver):
+        login_page = LoginPage(driver)
+        login_page.login("admin", "123456")
+        # 验证登录成功
+```
+
+**练习15：Pytest 参数化测试**
+
+使用 pytest 参数化实现数据驱动测试：
+
+```python
+import pytest
+
+class TestLogin:
+    @pytest.mark.parametrize("username,password,expected", [
+        ("admin", "123456", "success"),
+        ("admin", "wrong", "密码错误"),
+        ("", "123456", "请输入用户名"),
+        ("admin", "", "请输入密码"),
+    ])
+    def test_login_scenarios(self, driver, username, password, expected):
+        login_page = LoginPage(driver)
+        login_page.login(username, password)
+
+        if expected == "success":
+            # 验证登录成功
+            assert login_page.is_logged_in()
+        else:
+            # 验证错误消息
+            error = login_page.get_error_message()
+            assert expected in error
+```
+
+**练习16：多点触控操作**
+
+编写测试脚本实现双指缩放：
+
+```python
+from appium.webdriver.common.multi_action import MultiAction
+from appium.webdriver.common.touch_action import TouchAction
+
+def test_pinch_zoom(driver):
+    # 双指缩放
+    action1 = TouchAction(driver)
+    action2 = TouchAction(driver)
+
+    # 手指1：从中心向左上移动
+    action1.press(x=300, y=300).move_to(x=200, y=200)
+
+    # 手指2：从中心向右下移动
+    action2.press(x=300, y=300).move_to(x=400, y=400)
+
+    # 同时执行
+    multi = MultiAction(driver)
+    multi.add(action1, action2)
+    multi.perform()
+```
+
+---
+
+### 综合练习（17-20）
+
+**练习17：完整的移动端购物流程测试**
+
+使用 Page Object 模式实现移动端购物流程测试：
+1. 用户登录
+2. 搜索商品
+3. 查看商品详情
+4. 添加到购物车
+5. 结算下单
+6. 验证订单状态
+
+```python
+# 需要实现的 Page Objects：
+# - LoginPage
+# - HomePage
+# - SearchPage
+# - ProductDetailPage
+# - CartPage
+# - CheckoutPage
+# - OrderPage
+
+class TestMobileShopping:
+    def test_complete_shopping_flow(self, driver):
+        # 1. 登录
+        login_page = LoginPage(driver)
+        login_page.login("user", "password")
+
+        # 2. 搜索商品
+        home_page = HomePage(driver)
+        home_page.search("手机")
+
+        # 3. 查看详情并加入购物车
+        search_page = SearchPage(driver)
+        search_page.click_first_product()
+
+        # 4. 结算下单
+        # 5. 验证订单
+        pass
+```
+
+**练习18：混合应用测试**
+
+编写测试脚本测试混合应用（原生 + WebView）：
+
+```python
+class TestHybridApp:
+    def test_native_to_webview(self, driver):
+        # 在原生界面操作
+        driver.find_element(AppiumBy.ID, "open_web").click()
+
+        # 等待 WebView 加载
+        import time
+        time.sleep(2)
+
+        # 切换到 WebView
+        contexts = driver.contexts
+        webview_context = [c for c in contexts if "WEBVIEW" in c][0]
+        driver.switch_to.context(webview_context)
+
+        # 在 WebView 中测试
+        from selenium.webdriver.common.by import By
+        driver.find_element(By.ID, "web_element").click()
+
+        # 切换回原生
+        driver.switch_to.context("NATIVE_APP")
+
+    def test_webview_to_native(self, driver):
+        # WebView 操作触发原生功能
+        pass
+```
+
+**练习19：设备特性测试**
+
+编写测试脚本测试设备特性：
+1. 摄像头调用
+2. 相册选择
+3. 地理位置模拟
+4. 网络状态切换
+
+```python
+class TestDeviceFeatures:
+    def test_camera(self, driver):
+        # 触发拍照
+        driver.find_element(AppiumBy.ID, "take_photo").click()
+
+        # 授权摄像头（如果需要）
+        # 确认拍照
+        pass
+
+    def test_location(self, driver):
+        # 模拟地理位置
+        driver.set_location(31.2304, 121.4737, 10)
+
+        # 验证位置相关功能
+        driver.find_element(AppiumBy.ID, "get_location").click()
+
+    def test_network(self, driver):
+        # 模拟网络切换
+        driver.set_network_connection(1)  # 飞行模式
+        driver.set_network_connection(4)  # 数据网络
+        driver.set_network_connection(2)  # WiFi
+```
+
+**练习20：CI/CD 集成配置**
+
+完成移动端测试的 CI/CD 配置：
+
+```yaml
+# .github/workflows/appium.yml
+name: Appium Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  android-test:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        api-level: [29, 30]
+        target: [google_apis]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Appium
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+
+      - name: Run Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          script: pytest tests/ -v
+
+      - name: Upload Screenshots
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshots
+          path: screenshots/
+```
+
+```python
+# conftest.py 完整配置
+import pytest
+from appium import webdriver
+from appium.options.android import UiAutomator2Options
+
+@pytest.fixture(scope="function")
+def driver():
+    options = UiAutomator2Options()
+    options.platform_name = "Android"
+    options.device_name = "emulator-5554"
+    options.automation_name = "UiAutomator2"
+    options.app = "/path/to/app.apk"
+    options.no_reset = False
+
+    driver = webdriver.Remote("http://localhost:4723", options=options)
+    yield driver
+    driver.quit()
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+
+    if report.when == "call" and report.failed:
+        driver = item.funcargs.get("driver")
+        if driver:
+            driver.save_screenshot(f"screenshots/{item.name}.png")
+```

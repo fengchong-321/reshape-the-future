@@ -689,120 +689,224 @@ with TestEnvironment("test"):
 
 ---
 
-## 四、练习内容
+## 四、练习内容（20 题）
 
-### 练习1：封装 HTTP 客户端类
+### 基础练习（1-8）
 
+**练习1：定义简单类**
 ```python
-# 实现 HttpClient 类，要求：
-# 1. 支持设置 base_url 和 timeout
-# 2. 支持 get/post 方法
-# 3. 自动记录请求日志
-# 4. 支持重试机制
-# 5. 使用 property 验证参数
-
-class HttpClient:
-    """HTTP 客户端"""
-    pass
-
-# 测试代码
-client = HttpClient("https://jsonplaceholder.typicode.com")
-response = client.get("/posts/1")
-print(response.json())
-
-client.timeout = 60
-try:
-    client.timeout = -1  # 应该抛出异常
-except ValueError as e:
-    print(e)
+# 定义 User 类
+# 1. 包含 username, email, age 属性
+# 2. __init__ 初始化
+# 3. 定义 get_info() 方法返回用户信息字符串
+# 4. 定义 is_adult() 方法判断是否成年
 ```
 
-### 练习2：测试用例管理类
-
+**练习2：self 理解**
 ```python
-# 实现 TestCase 和 TestSuite 类
+# 创建 Counter 类
+# 1. count 属性初始为 0
+# 2. increment() 方法 count + 1
+# 3. decrement() 方法 count - 1
+# 4. reset() 方法重置为 0
+# 5. get_count() 方法返回当前值
+```
 
+**练习3：类属性 vs 实例属性**
+```python
+# 创建 Student 类
+# 1. 类属性 school_name = "测试学校"
+# 2. 实例属性 name, grade
+# 3. 实例方法 get_info()
+# 4. 类方法 change_school(cls, name)
+# 5. 静态方法 is_passing(score)
+```
+
+**练习4：继承基础**
+```python
+# 创建动物类层次
+# 1. Animal 基类：name 属性，speak() 方法
+# 2. Dog 子类：继承 Animal，重写 speak() 返回 "汪汪"
+# 3. Cat 子类：继承 Animal，重写 speak() 返回 "喵喵"
+# 4. Bird 子类：继承 Animal，新增 fly() 方法
+```
+
+**练习5：方法重写与 super()**
+```python
+# 创建员工类
+# 1. Employee 基类：name, salary, get_bonus() 返回 salary * 0.1
+# 2. Manager 子类：继承 Employee，新增 team_size
+# 3. 重写 get_bonus() 返回 salary * 0.2 + team_size * 100
+# 4. 使用 super() 调用父类方法
+```
+
+**练习6：property 装饰器**
+```python
+# 创建 Product 类
+# 1. 私有属性 _price
+# 2. @property getter
+# 3. @price.setter 验证 price > 0
+# 4. @price.deleter 打印删除信息
+# 5. @property 只读属性 discount_price
+```
+
+**练习7：异常处理基础**
+```python
+# 编写安全除法函数
+# 1. safe_divide(a, b) 处理除零异常
+# 2. 返回结果或错误信息
+# 3. 使用 try/except/else/finally
+# 4. 记录日志
+```
+
+**练习8：自定义异常**
+```python
+# 定义测试相关异常
+# 1. TestError 基类
+# 2. TestNotFoundError 继承 TestError
+# 3. TestTimeoutError 继承 TestError
+# 4. TestAssertionError 继承 TestError
+# 5. 每个异常包含 message 和 code 属性
+```
+
+### 进阶练习（9-16）
+
+**练习9：封装 HTTP 客户端类**
+```python
+class HttpClient:
+    """HTTP 客户端"""
+    # 要求：
+    # 1. 支持设置 base_url 和 timeout
+    # 2. 支持 get/post/put/delete 方法
+    # 3. 自动记录请求日志
+    # 4. 支持重试机制
+    # 5. 使用 property 验证 timeout > 0
+```
+
+**练习10：测试用例管理类**
+```python
 class TestCase:
     """测试用例"""
-    # 要求：
-    # 1. 包含 name, priority, status, duration 属性
-    # 2. 实现 __str__ 和 __lt__（按优先级排序）
-    # 3. 实现 run() 方法（模拟执行）
-    pass
-
+    # name, priority, status, duration 属性
+    # __str__ 和 __lt__（按优先级排序）
 
 class TestSuite:
     """测试套件"""
-    # 要求：
-    # 1. 可以添加多个 TestCase
-    # 2. 实现 run_all() 运行所有用例
-    # 3. 实现 get_report() 生成报告
-    # 4. 按优先级排序执行
-    pass
-
-
-# 测试代码
-suite = TestSuite("冒烟测试")
-suite.add_case(TestCase("登录测试", "P0"))
-suite.add_case(TestCase("搜索测试", "P1"))
-suite.add_case(TestCase("支付测试", "P0"))
-
-suite.run_all()
-print(suite.get_report())
+    # add_case(), run_all(), get_report()
+    # 按优先级排序执行
 ```
 
-### 练习3：数据库连接管理器
-
+**练习11：数据库连接管理器**
 ```python
-# 实现数据库连接的上下文管理器
-
 class DBConnection:
     """数据库连接上下文管理器"""
-    # 要求：
-    # 1. 进入时建立连接
-    # 2. 离开时关闭连接
-    # 3. 发生异常时回滚事务
-    # 4. 记录连接时间
-    pass
-
-# 测试代码
-with DBConnection("localhost", "test_db") as db:
-    db.execute("SELECT * FROM users")
+    # __enter__: 建立连接
+    # __exit__: 关闭连接，异常时回滚
+    # 记录连接时间
 ```
 
-### 练习4：自定义测试框架
-
+**练习12：配置管理类**
 ```python
-# 实现一个迷你测试框架
+class Config:
+    """配置管理"""
+    # 1. 从字典/JSON/YAML 加载
+    # 2. 支持点号访问 config.get("db.host")
+    # 3. 支持环境变量覆盖
+    # 4. 验证必填字段
+    # 5. 导出为字典
+```
 
+**练习13：日志记录器类**
+```python
+class Logger:
+    """简易日志记录器"""
+    # 1. 支持 INFO/WARN/ERROR 级别
+    # 2. 支持输出到文件和控制台
+    # 3. 带时间戳格式
+    # 4. 支持日志轮转（按大小/时间）
+    # 5. 使用单例模式
+```
+
+**练习14：测试数据工厂**
+```python
+class TestDataFactory:
+    """测试数据工厂"""
+    # 1. @classmethod create_user(**kwargs)
+    # 2. @classmethod create_order(**kwargs)
+    # 3. @classmethod create_product(**kwargs)
+    # 4. 支持批量生成
+    # 5. 支持保存到文件
+```
+
+**练习15：断言库类**
+```python
+class Assert:
+    """断言库"""
+    # @staticmethod equal(actual, expected)
+    # @staticmethod not_equal(a, b)
+    # @staticmethod contains(item, container)
+    # @staticmethod raises(func, exception)
+    # @staticmethod json_equal(actual, expected, ignore_keys=[])
+```
+
+**练习16：API 封装类**
+```python
+class UserAPI(BaseAPI):
+    """用户 API 封装"""
+    # 继承 BaseAPI
+    # login(username, password)
+    # logout()
+    # get_profile()
+    # update_profile(data)
+    # delete_account()
+```
+
+### 综合练习（17-20）
+
+**练习17：迷你测试框架**
+```python
 class TestResult:
-    """测试结果"""
+    """测试结果收集"""
     pass
-
 
 class TestRunner:
     """测试运行器"""
-    # 要求：
-    # 1. 收集所有测试用例
-    # 2. 执行并收集结果
-    # 3. 支持前置/后置操作
-    # 4. 生成统计报告
-    pass
+    # 收集所有 test_ 开头的方法
+    # 执行并收集结果
+    # 支持 setup/teardown
+    # 生成统计报告
+```
 
+**练习18：缓存装饰器类**
+```python
+class CacheDecorator:
+    """方法结果缓存装饰器"""
+    # 缓存方法返回值
+    # 支持设置过期时间
+    # 支持手动清除缓存
+    # 线程安全
+```
 
-# 使用示例
-class MyTests:
-    def test_login(self):
-        assert True
+**练习19：插件系统**
+```python
+class PluginManager:
+    """插件管理器"""
+    # register(plugin) 注册插件
+    # load(path) 从路径加载
+    # execute(hook_name, *args) 执行钩子
+    # get_plugins() 获取所有插件
+    # unload(plugin_name) 卸载插件
+```
 
-    def test_search(self):
-        assert False
-
-
-runner = TestRunner()
-runner.load(MyTests)
-result = runner.run()
-print(result.summary())
+**练习20：状态机**
+```python
+class TestStateMachine:
+    """测试用例状态机"""
+    # 状态：pending -> running -> passed/failed/skipped
+    # transition(to_state) 状态转换
+    # can_transition(to_state) 检查是否可转换
+    # get_history() 获取状态历史
+    # 使用 @property 实现只读状态
 ```
 
 ---
