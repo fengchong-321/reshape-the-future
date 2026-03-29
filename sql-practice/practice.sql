@@ -20,20 +20,30 @@ SELECT
     r.name as receiver_name,
     p.weight,
     p.declared_value
-FROM packages p
-JOIN customers s ON p.sender_id = s.customer_id
-JOIN customers r ON p.receiver_id = r.customer_id;
+FROM
+    packages p
+    JOIN customers s ON p.sender_id = s.customer_id
+    JOIN customers r ON p.receiver_id = r.customer_id;
 
 -- 6. 查询每个包裹的最新状态
-SELECT
-    p.tracking_number,
-    sh.status,
-    sh.location,
-    sh.update_time
+SELECT p.tracking_number, sh.status, sh.location, sh.update_time
 FROM packages p
-JOIN shipments sh ON p.package_id = sh.package_id
-WHERE sh.update_time = (
-    SELECT MAX(update_time)
-    FROM shipments
-    WHERE package_id = p.package_id
-);
+    JOIN shipments sh ON p.package_id = sh.package_id
+WHERE
+    sh.update_time = (
+        SELECT MAX(update_time)
+        FROM shipments
+        WHERE
+            package_id = p.package_id
+    );
+
+-- 1. 查询所有已签收（delivered）的包裹的运单号、发件人姓名、收件人姓名。
+select * from packages
+
+select * from shipments sh
+
+select distinct p.tracking_number,c1.name as sender , c2.name as recevier from packages p
+join shipments s on p.package_id = s.package_id
+join customers c1 on p.sender_id = c1.customer_id
+join customers c2 on p.receiver_id = c2.customer_id
+where s.status = 'delivered'
