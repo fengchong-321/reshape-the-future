@@ -1,8 +1,8 @@
-# 第11周：性能测试进阶
+# 第11周：Docker 容器化测试
 
 ## 本周目标
 
-掌握性能测试高级技巧，能进行性能分析和调优建议。
+掌握 Docker 容器化技术，能够使用 Docker 构建测试环境、运行容器化测试。
 
 ---
 
@@ -10,323 +10,381 @@
 
 | 主题 | 内容 | 重要性 |
 |------|------|--------|
-| 分布式压测 | Master-Worker 模式 | ⭐⭐⭐⭐ |
-| 性能监控 | 服务器资源监控 | ⭐⭐⭐⭐⭐ |
-| 瓶颈分析 | 定位性能瓶颈 | ⭐⭐⭐⭐⭐ |
-| 测试报告 | 专业报告编写 | ⭐⭐⭐⭐ |
-| 性能调优 | 常见优化策略 | ⭐⭐⭐⭐ |
+| Docker 基础 | 镜像、容器、仓库 | ⭐⭐⭐⭐⭐ |
+| Dockerfile | 编写、优化、多阶段构建 | ⭐⭐⭐⭐⭐ |
+| Docker Compose | 多容器编排、网络、 volumes | ⭐⭐⭐⭐ |
+| 测试环境容器化 | 测试数据库、Mock 服务 | ⭐⭐⭐⭐⭐ |
+| testcontainers | Python 测试容器库 | ⭐⭐⭐⭐ |
 
 ---
 
 ## 二、知识点详解
 
-### 2.1 分布式压测
+### 2.1 Docker 基础概念
 
 ```bash
-# 单机压测上限
-# 单台机器通常只能模拟几百到几千用户
-# 需要分布式压测模拟更大并发
+# ============================================
+# Docker 核心概念
+# ============================================
+# 镜像（Image）：只读模板，包含运行应用所需的一切
+# 容器（Container）：镜像的运行实例
+# 仓库（Registry）：存储和分发镜像（Docker Hub、私有仓库）
 
 # ============================================
-# Master-Worker 模式
+# 常用命令
 # ============================================
-# Master 节点（协调）
-locust -f locustfile.py --master
+# 查看版本
+docker --version
+docker version
 
-# Worker 节点（执行）
-locust -f locustfile.py --worker --master-host=<master-ip>
+# 拉取镜像
+docker pull python:3.11
+docker pull mysql:8.0
+docker pull redis:7
 
-# 多 Worker 示例
-# 机器1（Master）：locust -f locustfile.py --master
-# 机器2（Worker）：locust -f locustfile.py --worker --master-host=192.168.1.100
-# 机器3（Worker）：locust -f locustfile.py --worker --master-host=192.168.1.100
-# 机器4（Worker）：locust -f locustfile.py --worker --master-host=192.168.1.100
+# 查看本地镜像
+docker images
+
+# 运行容器
+docker run -d --name my-python python:3.11 sleep 1000
+docker run -d --name my-mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:8.0
+
+# 查看运行中的容器
+docker ps
+docker ps -a  # 包括已停止的
+
+# 进入容器
+docker exec -it my-python bash
+
+# 停止/启动/删除容器
+docker stop my-python
+docker start my-python
+docker rm my-python
+
+# 删除镜像
+docker rmi python:3.11
+
+# 查看容器日志
+docker logs my-mysql
+docker logs -f my-mysql  # 实时查看
+
+# 查看容器资源使用
+docker stats
+```
+
+### 2.2 Dockerfile 编写
+
+```dockerfile
+# ============================================
+# 基础 Dockerfile 示例
+# ============================================
+# 基础镜像
+FROM python:3.11-slim
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制依赖文件
+COPY requirements.txt .
+
+# 安装 Python 依赖
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制项目文件
+COPY . .
+
+# 运行测试命令
+CMD ["pytest", "-v"]
+```
+
+```dockerfile
+# ============================================
+# 多阶段构建（减小镜像体积）
+# ============================================
+# 第一阶段：构建
+FROM python:3.11 AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir --target=/app/deps -r requirements.txt
+
+# 第二阶段：运行
+FROM python:3.11-slim
+WORKDIR /app
+COPY --from=builder /app/deps /usr/local/lib/python3.11/site-packages
+COPY . .
+CMD ["pytest", "-v"]
 ```
 
 ```python
-# 分布式环境初始化
-from locust import HttpUser, task, events
-from locust.runners import MasterRunner
-
-@events.test_start.add_listener
-def on_test_start(environment, **kwargs):
-    """只在 Master 节点执行初始化"""
-    if isinstance(environment.runner, MasterRunner):
-        # 准备测试数据
-        import requests
-        requests.post("http://api.example.com/test/setup")
-
-@events.test_stop.add_listener
-def on_test_stop(environment, **kwargs):
-    """只在 Master 节点执行清理"""
-    if isinstance(environment.runner, MasterRunner):
-        # 清理测试数据
-        import requests
-        requests.post("http://api.example.com/test/cleanup")
-```
-
----
-
-### 2.2 性能监控
-
-```python
 # ============================================
-# 监控服务器资源
+# Python 脚本构建镜像
 # ============================================
-import psutil
-import time
+import subprocess
 
-def monitor_resources(interval=1, duration=60):
-    """监控 CPU 和内存使用"""
-    results = []
-    start_time = time.time()
-
-    while time.time() - start_time < duration:
-        cpu_percent = psutil.cpu_percent(interval=interval)
-        memory = psutil.virtual_memory()
-
-        results.append({
-            "timestamp": time.time() - start_time,
-            "cpu_percent": cpu_percent,
-            "memory_percent": memory.percent,
-            "memory_used_gb": memory.used / (1024**3)
-        })
-
-    return results
+def build_docker_image(tag: str, dockerfile_path: str = "."):
+    """构建 Docker 镜像"""
+    cmd = ["docker", "build", "-t", tag, dockerfile_path]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise Exception(f"构建失败: {result.stderr}")
+    return tag
 
 # 使用
-metrics = monitor_resources(interval=1, duration=60)
-for m in metrics:
-    print(f"CPU: {m['cpu_percent']}%, Memory: {m['memory_percent']}%")
+build_docker_image("my-test:latest", "./tests")
+```
 
+### 2.3 Docker Compose
+
+```yaml
 # ============================================
-# 监控数据库连接
+# docker-compose.yml 示例
 # ============================================
+version: '3.8'
+
+services:
+  # 测试数据库
+  test-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: test123
+      MYSQL_DATABASE: test_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Redis 缓存
+  test-redis:
+    image: redis:7
+    ports:
+      - "6380:6379"
+
+  # Mock API 服务
+  mock-api:
+    image: wiremock/wiremock:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mocks:/home/wiremock
+
+  # 测试运行器
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_started
+    environment:
+      DB_HOST: test-db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: test123
+      REDIS_HOST: test-redis
+    volumes:
+      - ./reports:/app/reports
+
+volumes:
+  db_data:
+```
+
+```python
+# ============================================
+# 使用 Docker Compose 管理测试环境
+# ============================================
+import subprocess
+import time
+
+class DockerComposeManager:
+    """Docker Compose 环境管理器"""
+
+    def __init__(self, compose_file: str = "docker-compose.yml"):
+        self.compose_file = compose_file
+
+    def up(self, services: list = None):
+        """启动服务"""
+        cmd = ["docker-compose", "-f", self.compose_file, "up", "-d"]
+        if services:
+            cmd.extend(services)
+        subprocess.run(cmd, check=True)
+
+    def down(self):
+        """停止并清理"""
+        cmd = ["docker-compose", "-f", self.compose_file, "down", "-v"]
+        subprocess.run(cmd, check=True)
+
+    def wait_for_service(self, service: str, port: int, timeout: int = 60):
+        """等待服务就绪"""
+        import socket
+        start = time.time()
+        while time.time() - start < timeout:
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
+                result = sock.connect_ex(('localhost', port))
+                if result == 0:
+                    return True
+            except:
+                pass
+            time.sleep(1)
+        raise TimeoutError(f"服务 {service} 启动超时")
+
+# 使用
+manager = DockerComposeManager()
+manager.up(["test-db", "test-redis"])
+manager.wait_for_service("test-db", 3307)
+```
+
+### 2.4 testcontainers 库
+
+```python
+# ============================================
+# testcontainers-python 使用
+# ============================================
+# 安装：pip install testcontainers
+
+import pytest
+from testcontainers.mysql import MySqlContainer
+from testcontainers.redis import RedisContainer
 import pymysql
-
-def check_db_connections(host, user, password, database):
-    """检查数据库连接数"""
-    conn = pymysql.connect(
-        host=host, user=user, password=password, database=database
-    )
-    cursor = conn.cursor()
-    cursor.execute("SHOW STATUS LIKE 'Threads_connected'")
-    result = cursor.fetchone()
-    cursor.execute("SHOW VARIABLES LIKE 'max_connections'")
-    max_conn = cursor.fetchone()
-    conn.close()
-
-    current = int(result[1])
-    max_allowed = int(max_conn[1])
-
-    return {
-        "current_connections": current,
-        "max_connections": max_allowed,
-        "usage_percent": current / max_allowed * 100
-    }
-
-# ============================================
-# 监控 Redis
-# ============================================
 import redis
 
-def check_redis_status(host="localhost", port=6379):
-    """检查 Redis 状态"""
-    r = redis.Redis(host=host, port=port)
-    info = r.info()
+class TestWithContainers:
 
-    return {
-        "connected_clients": info["connected_clients"],
-        "used_memory_human": info["used_memory_human"],
-        "total_commands_processed": info["total_commands_processed"],
-        "instantaneous_ops_per_sec": info["instantaneous_ops_per_sec"]
-    }
+    @pytest.fixture(scope="class")
+    def mysql_container(self):
+        """MySQL 容器 fixture"""
+        with MySqlContainer("mysql:8.0") as mysql:
+            yield mysql
+
+    @pytest.fixture(scope="class")
+    def redis_container(self):
+        """Redis 容器 fixture"""
+        with RedisContainer("redis:7") as redis_container:
+            yield redis_container
+
+    def test_mysql_connection(self, mysql_container):
+        """测试 MySQL 连接"""
+        conn = pymysql.connect(
+            host=mysql_container.get_container_host_ip(),
+            port=mysql_container.get_exposed_port(3306),
+            user="root",
+            password="test",
+            database="test"
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        result = cursor.fetchone()
+        assert result == (1,)
+        conn.close()
+
+    def test_redis_connection(self, redis_container):
+        """测试 Redis 连接"""
+        client = redis.Redis(
+            host=redis_container.get_container_host_ip(),
+            port=redis_container.get_exposed_port(6379)
+        )
+        client.set("test_key", "test_value")
+        assert client.get("test_key") == b"test_value"
 ```
-
----
-
-### 2.3 瓶颈分析
 
 ```python
 # ============================================
-# 性能瓶颈分析框架
+# 自定义容器
 # ============================================
+from testcontainers.core.generic import GenericContainer
 
-class PerformanceAnalyzer:
-    """性能分析器"""
+class MockApiContainer(GenericContainer):
+    """Mock API 容器"""
 
-    def __init__(self, locust_stats, server_metrics):
-        self.stats = locust_stats
-        self.metrics = server_metrics
+    def __init__(self, image: str = "wiremock/wiremock:latest"):
+        super().__init__(image)
+        self.with_exposed_ports(8080)
 
-    def analyze(self):
-        """综合分析"""
-        report = {
-            "summary": self._get_summary(),
-            "bottlenecks": [],
-            "recommendations": []
-        }
+    def get_url(self):
+        return f"http://{self.get_container_host_ip()}:{self.get_exposed_port(8080)}"
 
-        # 1. 检查错误率
-        if self.stats.total.fail_ratio > 0.01:
-            report["bottlenecks"].append({
-                "type": "high_error_rate",
-                "severity": "high",
-                "value": f"{self.stats.total.fail_ratio * 100:.2f}%",
-                "threshold": "<1%"
-            })
-            report["recommendations"].append("检查错误日志，定位失败原因")
-
-        # 2. 检查响应时间
-        p99 = self.stats.total.get_response_time_percentile(0.99)
-        if p99 > 2000:
-            report["bottlenecks"].append({
-                "type": "slow_response",
-                "severity": "high",
-                "value": f"P99: {p99:.0f}ms",
-                "threshold": "<2000ms"
-            })
-            report["recommendations"].append("检查慢查询日志，优化数据库")
-
-        # 3. 检查 CPU 使用率
-        avg_cpu = sum(m["cpu_percent"] for m in self.metrics) / len(self.metrics)
-        if avg_cpu > 80:
-            report["bottlenecks"].append({
-                "type": "high_cpu",
-                "severity": "medium",
-                "value": f"平均 CPU: {avg_cpu:.1f}%",
-                "threshold": "<80%"
-            })
-            report["recommendations"].append("考虑增加服务器资源或优化代码")
-
-        # 4. 检查内存使用
-        avg_memory = sum(m["memory_percent"] for m in self.metrics) / len(self.metrics)
-        if avg_memory > 85:
-            report["bottlenecks"].append({
-                "type": "high_memory",
-                "severity": "high",
-                "value": f"平均内存: {avg_memory:.1f}%",
-                "threshold": "<85%"
-            })
-            report["recommendations"].append("检查内存泄漏，增加内存或优化")
-
-        return report
-
-    def _get_summary(self):
-        """获取摘要"""
-        return {
-            "total_requests": self.stats.total.num_requests,
-            "total_failures": self.stats.total.num_failures,
-            "failure_rate": f"{self.stats.total.fail_ratio * 100:.2f}%",
-            "avg_response_time": f"{self.stats.total.avg_response_time:.2f}ms",
-            "rps": f"{self.stats.total.total_rps:.2f}"
-        }
-
-# ============================================
-# 常见瓶颈类型
-# ============================================
-"""
-1. 数据库瓶颈
-   - 症状：响应时间随并发增加而急剧上升
-   - 原因：慢查询、缺少索引、连接池不足
-   - 解决：优化 SQL、添加索引、增加连接池
-
-2. CPU 瓶颈
-   - 症状：CPU 使用率接近 100%，响应变慢
-   - 原因：计算密集型操作、死循环
-   - 解决：优化算法、增加服务器、使用缓存
-
-3. 内存瓶颈
-   - 症状：内存使用率高，频繁 GC
-   - 原因：内存泄漏、大对象
-   - 解决：修复泄漏、调整 JVM 参数
-
-4. 网络 I/O 瓶颈
-   - 症状：响应时间长，但 CPU/内存正常
-   - 原因：带宽不足、网络延迟
-   - 解决：压缩传输、CDN、优化网络
-
-5. 连接池瓶颈
-   - 症状：请求等待，错误率上升
-   - 原因：连接池太小
-   - 解决：增加连接池大小
-"""
+# 使用
+def test_with_mock_api():
+    with MockApiContainer() as mock:
+        url = mock.get_url()
+        # 配置 mock 响应...
+        # 进行测试...
 ```
 
----
+### 2.5 CI/CD 中使用 Docker
 
-### 2.4 性能测试报告
-
-```python
+```yaml
 # ============================================
-# 性能测试报告模板
+# GitLab CI 示例
 # ============================================
+test:
+  image: python:3.11
+  services:
+    - mysql:8.0
+    - redis:7
+  variables:
+    MYSQL_ROOT_PASSWORD: test123
+    MYSQL_DATABASE: test_db
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - pytest --junitxml=report.xml
+  artifacts:
+    reports:
+      junit: report.xml
+```
 
-def generate_performance_report(test_config, locust_stats, server_metrics, analysis):
-    """生成性能测试报告"""
+```yaml
+# ============================================
+# GitHub Actions 示例
+# ============================================
+name: Tests
 
-    report = f"""
-# 性能测试报告
+on: [push, pull_request]
 
-## 1. 测试概要
+jobs:
+  test:
+    runs-on: ubuntu-latest
 
-| 项目 | 内容 |
-|------|------|
-| 测试日期 | {test_config['date']} |
-| 测试环境 | {test_config['environment']} |
-| 测试时长 | {test_config['duration']} |
-| 并发用户数 | {test_config['users']} |
-| 测试接口 | {test_config['endpoints']} |
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test123
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
-## 2. 测试结果
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
 
-### 2.1 总体指标
-
-| 指标 | 数值 | 目标 | 结果 |
-|------|------|------|------|
-| 总请求数 | {locust_stats.total.num_requests} | - | - |
-| 错误率 | {locust_stats.total.fail_ratio * 100:.2f}% | <1% | {'✅' if locust_stats.total.fail_ratio < 0.01 else '❌'} |
-| 平均响应时间 | {locust_stats.total.avg_response_time:.2f}ms | <300ms | {'✅' if locust_stats.total.avg_response_time < 300 else '❌'} |
-| P99 响应时间 | {locust_stats.total.get_response_time_percentile(0.99):.2f}ms | <1000ms | {'✅' if locust_stats.total.get_response_time_percentile(0.99) < 1000 else '❌'} |
-| TPS | {locust_stats.total.total_rps:.2f} | >100 | {'✅' if locust_stats.total.total_rps > 100 else '❌'} |
-
-### 2.2 资源使用
-
-| 资源 | 平均使用率 | 峰值使用率 | 目标 |
-|------|-----------|-----------|------|
-| CPU | {sum(m['cpu_percent'] for m in server_metrics)/len(server_metrics):.1f}% | {max(m['cpu_percent'] for m in server_metrics):.1f}% | <80% |
-| 内存 | {sum(m['memory_percent'] for m in server_metrics)/len(server_metrics):.1f}% | {max(m['memory_percent'] for m in server_metrics):.1f}% | <85% |
-
-## 3. 瓶颈分析
-
-"""
-    for bottleneck in analysis["bottlenecks"]:
-        report += f"""
-### {bottleneck['type']}
-- 严重程度：{bottleneck['severity']}
-- 实际值：{bottleneck['value']}
-- 阈值：{bottleneck['threshold']}
-"""
-
-    report += """
-## 4. 优化建议
-
-"""
-    for i, rec in enumerate(analysis["recommendations"], 1):
-        report += f"{i}. {rec}\n"
-
-    report += """
-## 5. 结论
-
-本次性能测试{'通过' if locust_stats.total.fail_ratio < 0.01 and locust_stats.total.get_response_time_percentile(0.99) < 1000 else '未通过'}。
-
-## 6. 附录
-
-- 详细数据：[附件]
-- 监控图表：[附件]
-"""
-
-    return report
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: pytest
 ```
 
 ---
@@ -334,16 +392,17 @@ def generate_performance_report(test_config, locust_stats, server_metrics, analy
 ## 三、学到什么程度
 
 ### 必须掌握
-
-- [ ] 能运行分布式压测
-- [ ] 能监控服务器资源
-- [ ] 能分析性能瓶颈
-- [ ] 能编写性能测试报告
+- [ ] Docker 基本概念和常用命令
+- [ ] 编写 Dockerfile 构建测试镜像
+- [ ] 使用 Docker Compose 编排多容器
+- [ ] 使用 testcontainers 进行容器化测试
+- [ ] CI/CD 中集成 Docker 测试
 
 ### 应该了解
-
-- [ ] 容量规划
-- [ ] 性能调优策略
+- [ ] 多阶段构建优化镜像体积
+- [ ] Docker 网络和数据卷
+- [ ] 私有镜像仓库使用
+- [ ] 容器安全最佳实践
 
 ---
 
@@ -351,540 +410,691 @@ def generate_performance_report(test_config, locust_stats, server_metrics, analy
 
 ### 基础练习（1-8）
 
-#### 练习1：分布式压测环境搭建
+#### 练习1：Docker 基础操作
 
+**场景说明：**
+作为测试工程师，需要在本地快速搭建测试环境，使用 Docker 可以避免手动安装各种依赖。
+
+**具体需求：**
+1. 拉取 Python 3.11 镜像
+2. 运行一个交互式容器
+3. 在容器内执行 Python 代码
+4. 查看容器日志和状态
+
+**使用示例：**
 ```bash
-# 任务要求：
-# 在两台机器（或两个终端）配置 Master-Worker 模式
+# 拉取镜像
+docker pull python:3.11-slim
 
-# 步骤：
-# 1. 机器1 启动 Master：
-#    locust -f locustfile.py --master
-# 2. 机器2 启动 Worker：
-#    locust -f locustfile.py --worker --master-host=<master-ip>
-# 3. 访问 Master 的 Web UI
-# 4. 启动 100 并发用户测试
-# 5. 观察两个节点的状态
+# 运行交互式容器
+docker run -it --name my-python python:3.11-slim bash
 
-# 预期输出：
-# Master 能正确分配任务给 Worker
-# 统计数据在 Master 汇总显示
+# 在容器内执行
+python -c "print('Hello Docker')"
+
+# 查看容器状态
+docker ps -a
+docker inspect my-python
 ```
 
-#### 练习2：多 Worker 负载均衡
-
-```bash
-# 任务要求：
-# 配置 3 个 Worker 节点，验证负载均衡
-
-# 步骤：
-# 1. 启动 1 个 Master 和 3 个 Worker
-# 2. 设置 300 并发用户
-# 3. 观察各 Worker 的请求分配情况
-# 4. 动态添加/移除 Worker
-# 5. 记录各节点的 RPS 贡献
-
-# 预期输出：
-# 请求均匀分配到各 Worker
-# Worker 退出后任务自动重分配
-```
-
-#### 练习3：服务器资源监控
-
-```python
-# 任务要求：
-# 编写资源监控脚本，与性能测试同步运行
-
-# 功能要求：
-# 1. 监控 CPU 使用率
-# 2. 监控内存使用率
-# 3. 监控磁盘 I/O
-# 4. 每秒采样一次
-# 5. 输出到 CSV 文件
-
-# 使用 psutil 库：
-import psutil
-import csv
-import time
-
-# 预期输出：
-# resources.csv 包含完整的监控数据
-```
-
-#### 练习4：数据库连接监控
-
-```python
-# 任务要求：
-# 监控 MySQL 数据库连接数变化
-
-# 功能要求：
-# 1. 连接到 MySQL 数据库
-# 2. 查询当前连接数
-# 3. 查询最大连接数配置
-# 4. 计算连接使用率
-# 5. 每 5 秒输出一次状态
-
-# SQL 参考：
-# SHOW STATUS LIKE 'Threads_connected'
-# SHOW VARIABLES LIKE 'max_connections'
-
-# 预期输出：
-# 连接数变化曲线
-# 连接使用率告警（>80%）
-```
-
-#### 练习5：Redis 状态监控
-
-```python
-# 任务要求：
-# 监控 Redis 在性能测试期间的状态
-
-# 监控指标：
-# 1. 连接客户端数
-# 2. 内存使用量
-# 3. 命令执行次数
-# 4. 每秒操作数
-# 5. 键空间大小
-
-# 使用 redis-py：
-import redis
-
-# 预期输出：
-# Redis 状态报告
-# 性能瓶颈提示
-```
-
-#### 练习6：性能指标采集
-
-```python
-# 任务要求：
-# 创建统一的指标采集类
-
-# 功能要求：
-class MetricsCollector:
-    def __init__(self):
-        # 初始化
-        pass
-
-    def collect(self):
-        # 采集所有指标
-        pass
-
-    def to_dict(self):
-        # 转换为字典格式
-        pass
-
-    def to_json(self):
-        # 转换为 JSON 格式
-        pass
-
-# 采集内容：
-# - CPU、内存、磁盘、网络
-# - 自定义业务指标
-# - 时间戳
-```
-
-#### 练习7：Locust 统计数据导出
-
-```python
-# 任务要求：
-# 编写事件监听器，导出 Locust 统计数据
-
-# 功能要求：
-# 1. 在 test_stop 事件中触发
-# 2. 导出每个接口的统计数据
-# 3. 包含：请求数、失败数、响应时间、RPS
-# 4. 输出为 CSV 和 JSON 两种格式
-# 5. 生成汇总报告
-
-# 预期输出：
-# locust_stats.csv
-# locust_stats.json
-# summary.txt
-```
-
-#### 练习8：基础瓶颈识别
-
-```
-# 任务要求：
-# 根据以下测试数据分析性能瓶颈
-
-# 测试数据：
-# - 总请求数：50000
-# - 错误率：5.2%
-# - 平均响应时间：800ms
-# - P99 响应时间：3500ms
-# - CPU 使用率：95%
-# - 内存使用率：45%
-# - 数据库连接数：150/200
-
-# 问题：
-# 1. 识别主要瓶颈
-# 2. 分析可能的原因
-# 3. 提出初步优化建议
-# 4. 设计验证方案
-
-# 预期输出：
-# 瓶颈分析报告
-```
-
-### 进阶练习（9-16）
-
-#### 练习9：性能分析器实现
-
-```python
-# 任务要求：
-# 实现完整的性能分析器类
-
-class PerformanceAnalyzer:
-    def __init__(self, locust_stats, server_metrics):
-        self.stats = locust_stats
-        self.metrics = server_metrics
-
-    def analyze(self):
-        # 综合分析方法
-        pass
-
-    def check_error_rate(self, threshold=0.01):
-        # 检查错误率
-        pass
-
-    def check_response_time(self, p99_threshold=2000):
-        # 检查响应时间
-        pass
-
-    def check_resource_usage(self, cpu_threshold=80, mem_threshold=85):
-        # 检查资源使用
-        pass
-
-    def generate_recommendations(self):
-        # 生成优化建议
-        pass
-
-# 预期输出：
-# 结构化的分析结果
-```
-
-#### 练习10：瓶颈类型分类
-
-```python
-# 任务要求：
-# 实现瓶颈类型自动识别
-
-# 瓶颈类型：
-BOTTLENECK_TYPES = {
-    'database': {
-        'symptoms': ['响应时间随并发增加', '数据库连接数高'],
-        'checks': ['check_db_connections', 'check_slow_queries']
-    },
-    'cpu': {
-        'symptoms': ['CPU 使用率高', '响应变慢'],
-        'checks': ['check_cpu_usage']
-    },
-    'memory': {
-        'symptoms': ['内存使用高', '频繁 GC'],
-        'checks': ['check_memory_usage', 'check_gc_stats']
-    },
-    'network': {
-        'symptoms': ['响应时间长', 'CPU/内存正常'],
-        'checks': ['check_network_io']
-    }
-}
-
-# 实现自动识别逻辑
-```
-
-#### 练习11：性能基线管理
-
-```python
-# 任务要求：
-# 实现性能基线的存储和对比
-
-# 功能要求：
-class BaselineManager:
-    def __init__(self, baseline_file='baseline.json'):
-        pass
-
-    def save_baseline(self, stats):
-        # 保存当前结果为基线
-        pass
-
-    def load_baseline(self):
-        # 加载基线数据
-        pass
-
-    def compare(self, current_stats):
-        # 对比当前结果与基线
-        # 返回差异报告
-        pass
-
-    def check_regression(self, current_stats, thresholds):
-        # 检查是否有性能退化
-        pass
-
-# 预期输出：
-# 基线对比报告
-# 性能退化告警
-```
-
-#### 练习12：实时监控仪表板
-
-```python
-# 任务要求：
-# 创建实时性能监控仪表板
-
-# 功能要求：
-# 1. 实时显示 RPS 曲线
-# 2. 实时显示响应时间曲线
-# 3. 实时显示错误率
-# 4. 显示服务器资源使用率
-# 5. 告警提示
-
-# 可选方案：
-# - 使用 matplotlib 绘图
-# - 使用 Flask 提供 Web 界面
-# - 使用 WebSocket 实时推送
-
-# 预期输出：
-# 实时更新的监控界面
-```
-
-#### 练习13：性能测试配置管理
-
-```python
-# 任务要求：
-# 实现测试场景的配置化管理
-
-# 配置文件示例 (config.yaml)：
-scenarios:
-  smoke_test:
-    users: 10
-    spawn_rate: 5
-    duration: 60
-    thresholds:
-      error_rate: 0.01
-      avg_rt: 500
-      p99_rt: 2000
-
-  load_test:
-    users: 100
-    spawn_rate: 10
-    duration: 300
-    thresholds:
-      error_rate: 0.01
-      avg_rt: 300
-      p99_rt: 1000
-
-  stress_test:
-    users: 500
-    spawn_rate: 20
-    duration: 600
-
-# 实现配置加载和验证
-```
-
-#### 练习14：分布式测试数据准备
-
-```python
-# 任务要求：
-# 在分布式环境下管理测试数据
-
-# 功能要求：
-# 1. Master 节点初始化测试数据
-# 2. Worker 节点获取测试数据
-# 3. 测试结束后清理数据
-# 4. 支持数据隔离
-
-# 使用 Locust 事件：
-@events.test_start.add_listener
-def on_test_start(environment, **kwargs):
-    if isinstance(environment.runner, MasterRunner):
-        # Master 初始化
-        pass
-
-@events.test_stop.add_listener
-def on_test_stop(environment, **kwargs):
-    if isinstance(environment.runner, MasterRunner):
-        # Master 清理
-        pass
-```
-
-#### 练习15：性能测试报告模板
-
-```python
-# 任务要求：
-# 创建专业的性能测试报告生成器
-
-# 报告结构：
-class PerformanceReport:
-    def __init__(self):
-        self.test_config = {}      # 测试配置
-        self.results = {}          # 测试结果
-        self.resource_metrics = {} # 资源指标
-        self.analysis = {}         # 瓶颈分析
-        self.recommendations = []  # 优化建议
-
-    def to_markdown(self):
-        # 生成 Markdown 格式报告
-        pass
-
-    def to_html(self):
-        # 生成 HTML 格式报告
-        pass
-
-    def to_pdf(self):
-        # 生成 PDF 格式报告（可选）
-        pass
-
-# 预期输出：
-# 完整的专业测试报告
-```
-
-#### 练习16：容量规划分析
-
-```python
-# 任务要求：
-# 基于性能测试结果进行容量规划
-
-# 分析内容：
-# 1. 当前系统容量（最大并发、TPS）
-# 2. 资源使用曲线
-# 3. 性能拐点预测
-# 4. 扩容建议
-
-# 输入数据：
-# - 不同并发下的性能数据
-# - 资源使用数据
-# - 业务增长预期
-
-# 输出：
-# - 当前容量评估
-# - 扩容时机建议
-# - 资源配置建议
-```
-
-### 综合练习（17-20）
-
-#### 练习17：完整性能测试流程
-
-```python
-# 任务要求：
-# 实现端到端的性能测试流程
-
-# 流程步骤：
-# 1. 环境检查（服务可用性、依赖服务）
-# 2. 测试数据准备
-# 3. 启动监控
-# 4. 执行性能测试
-# 5. 收集测试数据
-# 6. 停止监控
-# 7. 数据分析
-# 8. 生成报告
-# 9. 清理测试数据
-# 10. 发送通知
-
-# 实现要求：
-# - 使用 Python 脚本编排
-# - 支持配置化
-# - 完善的错误处理
-# - 详细的日志记录
-```
-
-#### 练习18：性能问题诊断案例
-
-```
-# 场景描述：
-# 某电商系统在大促期间出现性能问题
-
-# 症状：
-# - 首页加载时间从 500ms 上升到 5000ms
-# - 数据库 CPU 使用率 95%
-# - 应用服务器 CPU 使用率 60%
-# - 错误率从 0.1% 上升到 10%
-
-# 任务要求：
-# 1. 分析可能的瓶颈原因
-# 2. 设计排查步骤
-# 3. 提出优化方案
-# 4. 制定验证计划
-
-# 输出：
-# - 问题诊断报告
-# - 优化方案清单
-# - 预期效果评估
-```
-
-#### 练习19：性能测试平台设计
-
-```python
-# 任务要求：
-# 设计性能测试平台的核心模块
-
-# 模块设计：
-class PerformanceTestPlatform:
-    """性能测试平台"""
-
-    def __init__(self):
-        self.config_manager = ConfigManager()
-        self.test_executor = TestExecutor()
-        self.monitor = ResourceMonitor()
-        self.analyzer = PerformanceAnalyzer()
-        self.reporter = ReportGenerator()
-
-    def run_test(self, test_config):
-        """执行测试"""
-        pass
-
-    def schedule_test(self, test_config, schedule):
-        """定时测试"""
-        pass
-
-    def compare_results(self, test_id1, test_id2):
-        """结果对比"""
-        pass
-
-# 实现各模块的核心功能
-```
-
-#### 练习20：性能优化实践
-
-```python
-# 任务要求：
-# 基于性能测试结果实施优化并验证
-
-# 优化场景（选择一个）：
-# 场景 A：数据库优化
-# - 添加缺失索引
-# - 优化慢查询
-# - 调整连接池配置
-
-# 场景 B：缓存优化
-# - 添加 Redis 缓存
-# - 优化缓存策略
-# - 实现缓存预热
-
-# 场景 C：代码优化
-# - 优化热点代码
-# - 减少数据库查询
-# - 异步处理
-
-# 验证要求：
-# 1. 优化前性能基线
-# 2. 实施优化
-# 3. 优化后性能测试
-# 4. 对比分析报告
-# 5. 效果量化（性能提升百分比）
-```
+**验收标准：**
+- [ ] 成功拉取 Python 3.11 镜像
+- [ ] 能运行交互式容器
+- [ ] 能在容器内执行 Python 代码
+- [ ] 能查看容器详细信息和日志
 
 ---
 
-## 五、本周小结
+#### 练习2：编写 Dockerfile
 
-1. **分布式压测**：突破单机限制
-2. **监控**：性能分析的基础
-3. **瓶颈分析**：定位问题根源
-4. **报告**：专业输出能力
+**场景说明：**
+团队需要将测试环境标准化，使用 Dockerfile 可以确保所有开发者在相同的环境中运行测试。
 
-### 下周预告
+**具体需求：**
+1. 创建一个基于 Python 3.11 的测试镜像
+2. 安装 pytest 和 requests 库
+3. 复制测试代码到镜像
+4. 设置默认运行 pytest
 
-第12-13周学习 AI 与大模型测试。
+**使用示例：**
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY tests/ ./tests/
+CMD ["pytest", "tests/", "-v"]
+```
+
+**验收标准：**
+- [ ] Dockerfile 语法正确
+- [ ] 构建成功无报错
+- [ ] 镜像能正常运行测试
+- [ ] 镜像大小合理（< 500MB）
+
+---
+
+#### 练习3：Dockerfile 多阶段构建
+
+**场景说明：**
+生产环境需要最小化镜像体积以提高部署效率，多阶段构建可以只保留运行时必需的文件。
+
+**具体需求：**
+1. 第一阶段安装构建依赖
+2. 第二阶段只复制运行时文件
+3. 最终镜像体积减少 50% 以上
+
+**使用示例：**
+```dockerfile
+# 阶段1：构建
+FROM python:3.11 AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir --target=/app/deps -r requirements.txt
+
+# 阶段2：运行
+FROM python:3.11-slim
+WORKDIR /app
+COPY --from=builder /app/deps /usr/local/lib/python3.11/site-packages
+COPY . .
+CMD ["pytest"]
+```
+
+**验收标准：**
+- [ ] 使用多阶段构建语法
+- [ ] 最终镜像体积明显减小
+- [ ] 测试仍能正常运行
+- [ ] 构建时间在可接受范围内
+
+---
+
+#### 练习4：Docker Compose 基础
+
+**场景说明：**
+测试需要依赖多个服务（数据库、缓存等），使用 Docker Compose 可以一键启动所有依赖。
+
+**具体需求：**
+1. 编写 docker-compose.yml 文件
+2. 定义 MySQL 和 Redis 服务
+3. 配置端口映射和环境变量
+4. 使用命令启动和停止服务
+
+**使用示例：**
+```yaml
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: test123
+      MYSQL_DATABASE: testdb
+    ports:
+      - "3307:3306"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6380:6379"
+```
+
+**验收标准：**
+- [ ] docker-compose.yml 语法正确
+- [ ] docker-compose up 成功启动所有服务
+- [ ] 能通过映射端口访问服务
+- [ ] docker-compose down 正确清理资源
+
+---
+
+#### 练习5：Docker Compose 服务依赖
+
+**场景说明：**
+测试需要等待数据库完全启动后才能运行，需要配置服务依赖和健康检查。
+
+**具体需求：**
+1. 配置数据库健康检查
+2. 设置测试服务依赖数据库
+3. 测试服务在数据库就绪后启动
+
+**使用示例：**
+```yaml
+services:
+  db:
+    image: mysql:8.0
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  test:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+```
+
+**验收标准：**
+- [ ] 健康检查配置正确
+- [ ] depends_on 使用 condition
+- [ ] 测试在数据库就绪后执行
+- [ ] 启动顺序符合预期
+
+---
+
+#### 练习6：testcontainers MySQL
+
+**场景说明：**
+集成测试需要真实的数据库环境，使用 testcontainers 可以在测试时自动启动临时数据库。
+
+**具体需求：**
+1. 使用 testcontainers 启动 MySQL 容器
+2. 获取容器连接信息
+3. 执行数据库操作
+4. 测试结束后自动清理
+
+**使用示例：**
+```python
+from testcontainers.mysql import MySqlContainer
+import pymysql
+
+def test_with_mysql():
+    with MySqlContainer("mysql:8.0") as mysql:
+        conn = pymysql.connect(
+            host=mysql.get_container_host_ip(),
+            port=mysql.get_exposed_port(3306),
+            user="root",
+            password="test"
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT VERSION()")
+        assert cursor.fetchone() is not None
+```
+
+**验收标准：**
+- [ ] 容器成功启动
+- [ ] 能获取正确的连接信息
+- [ ] 数据库操作正常
+- [ ] 测试后容器自动清理
+
+---
+
+#### 练习7：testcontainers Redis
+
+**场景说明：**
+测试缓存功能需要 Redis 环境，使用 testcontainers 可以快速创建隔离的 Redis 实例。
+
+**具体需求：**
+1. 启动 Redis 容器
+2. 执行缓存读写操作
+3. 验证数据正确性
+
+**使用示例：**
+```python
+from testcontainers.redis import RedisContainer
+import redis
+
+def test_with_redis():
+    with RedisContainer("redis:7") as redis_container:
+        client = redis.Redis(
+            host=redis_container.get_container_host_ip(),
+            port=redis_container.get_exposed_port(6379)
+        )
+        client.set("key", "value")
+        assert client.get("key") == b"value"
+```
+
+**验收标准：**
+- [ ] Redis 容器成功启动
+- [ ] 能执行 set/get 操作
+- [ ] 数据读写正确
+- [ ] 连接配置正确
+
+---
+
+#### 练习8：testcontainers pytest fixture
+
+**场景说明：**
+多个测试用例需要共享同一个数据库容器，使用 pytest fixture 可以提高效率。
+
+**具体需求：**
+1. 创建 session 级别的 fixture
+2. 多个测试共享容器
+3. 每个测试使用独立的数据
+
+**使用示例：**
+```python
+import pytest
+from testcontainers.mysql import MySqlContainer
+
+@pytest.fixture(scope="session")
+def mysql_container():
+    with MySqlContainer("mysql:8.0") as mysql:
+        yield mysql
+
+@pytest.fixture
+def db_connection(mysql_container):
+    # 每个测试获取新连接
+    conn = create_connection(mysql_container)
+    yield conn
+    conn.close()
+
+def test_case1(db_connection):
+    # 使用数据库连接
+    pass
+
+def test_case2(db_connection):
+    # 使用数据库连接
+    pass
+```
+
+**验收标准：**
+- [ ] fixture 作用域正确
+- [ ] 容器只启动一次
+- [ ] 每个测试获取独立连接
+- [ ] 测试后资源正确清理
+
+---
+
+### 进阶练习（9-16）
+
+#### 练习9：自定义 testcontainers 容器
+
+**场景说明：**
+需要测试的项目依赖特定的服务（如 Elasticsearch、Kafka），需要自定义容器配置。
+
+**具体需求：**
+1. 继承 GenericContainer 创建自定义容器
+2. 配置环境变量和端口
+3. 添加等待策略
+
+**使用示例：**
+```python
+from testcontainers.core.generic import GenericContainer
+from testcontainers.core.waiting_utils import wait_for
+
+class ElasticsearchContainer(GenericContainer):
+    def __init__(self):
+        super().__init__("elasticsearch:8.0")
+        self.with_exposed_ports(9200)
+        self.with_env("discovery.type", "single-node")
+
+    def get_url(self):
+        return f"http://{self.get_container_host_ip()}:{self.get_exposed_port(9200)}"
+```
+
+**验收标准：**
+- [ ] 自定义容器类正确实现
+- [ ] 环境变量配置生效
+- [ ] 端口映射正确
+- [ ] 服务可正常访问
+
+---
+
+#### 练习10：Docker 网络配置
+
+**场景说明：**
+多个容器需要相互通信，需要配置 Docker 网络。
+
+**具体需求：**
+1. 创建自定义网络
+2. 容器加入同一网络
+3. 通过容器名互相访问
+
+**使用示例：**
+```yaml
+version: '3.8'
+services:
+  web:
+    image: nginx
+    networks:
+      - frontend
+
+  api:
+    image: python:3.11
+    networks:
+      - frontend
+      - backend
+
+  db:
+    image: mysql:8.0
+    networks:
+      - backend
+
+networks:
+  frontend:
+  backend:
+```
+
+**验收标准：**
+- [ ] 自定义网络创建成功
+- [ ] 容器正确加入网络
+- [ ] 容器间可以通过名称访问
+- [ ] 网络隔离符合预期
+
+---
+
+#### 练习11：Docker 数据卷
+
+**场景说明：**
+需要持久化测试数据和共享文件，使用数据卷可以管理容器数据。
+
+**具体需求：**
+1. 创建命名卷
+2. 挂载到容器指定路径
+3. 数据在容器删除后保留
+
+**使用示例：**
+```yaml
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  db_data:
+```
+
+**验收标准：**
+- [ ] 命名卷创建成功
+- [ ] 数据正确持久化
+- [ ] 容器删除后数据保留
+- [ ] 文件挂载正确
+
+---
+
+#### 练习12：容器化测试环境完整配置
+
+**场景说明：**
+为一个完整的测试项目配置容器化环境，包括数据库、缓存、Mock 服务。
+
+**具体需求：**
+1. 配置 MySQL + Redis + Mock API
+2. 编写测试运行容器
+3. 配置依赖和启动顺序
+
+**使用示例：**
+```yaml
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: test123
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+
+  mock:
+    image: wiremock/wiremock
+    ports:
+      - "8080:8080"
+
+  test:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+      MOCK_URL: http://mock:8080
+```
+
+**验收标准：**
+- [ ] 所有服务正确配置
+- [ ] 健康检查生效
+- [ ] 环境变量传递正确
+- [ ] 测试成功运行
+
+---
+
+#### 练习13：Docker 镜像优化
+
+**场景说明：**
+镜像体积过大影响构建和部署速度，需要优化 Dockerfile。
+
+**具体需求：**
+1. 使用 slim 基础镜像
+2. 合并 RUN 指令减少层数
+3. 清理缓存文件
+4. 使用 .dockerignore
+
+**使用示例：**
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 合并安装和清理
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# 使用缓存挂载
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+
+COPY . .
+```
+
+**验收标准：**
+- [ ] 镜像体积减少 30%+
+- [ ] 构建时间合理
+- [ ] 测试正常运行
+- [ ] 使用了 .dockerignore
+
+---
+
+#### 练习14：Docker in CI/CD
+
+**场景说明：**
+在 CI/CD 流水线中使用 Docker 运行测试。
+
+**具体需求：**
+1. 配置 GitHub Actions 或 GitLab CI
+2. 使用服务容器
+3. 缓存 Docker 层
+
+**使用示例：**
+```yaml
+# GitHub Actions
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test123
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t test-image .
+      - run: docker run test-image pytest
+```
+
+**验收标准：**
+- [ ] CI 配置正确
+- [ ] 服务容器正常启动
+- [ ] 测试成功运行
+- [ ] 构建日志清晰
+
+---
+
+#### 练习15：容器日志和调试
+
+**场景说明：**
+测试失败时需要查看容器日志进行调试。
+
+**具体需求：**
+1. 配置日志驱动
+2. 查看容器标准输出
+3. 进入容器调试
+
+**使用示例：**
+```bash
+# 查看日志
+docker logs container-name
+docker logs -f --tail 100 container-name
+
+# 进入容器
+docker exec -it container-name bash
+
+# 查看进程
+docker top container-name
+
+# 查看资源使用
+docker stats container-name
+```
+
+**验收标准：**
+- [ ] 能查看实时日志
+- [ ] 能进入容器调试
+- [ ] 能查看资源使用情况
+- [ ] 能导出容器日志
+
+---
+
+#### 练习16：Docker 安全最佳实践
+
+**场景说明：**
+生产环境需要注意容器安全，避免安全漏洞。
+
+**具体需求：**
+1. 使用非 root 用户运行
+2. 只读文件系统
+3. 限制资源使用
+
+**使用示例：**
+```dockerfile
+FROM python:3.11-slim
+
+# 创建非 root 用户
+RUN useradd -m appuser
+USER appuser
+
+WORKDIR /app
+COPY --chown=appuser:appuser . .
+
+CMD ["pytest"]
+```
+
+```yaml
+services:
+  app:
+    build: .
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+```
+
+**验收标准：**
+- [ ] 使用非 root 用户
+- [ ] 文件系统只读配置
+- [ ] 资源限制生效
+- [ ] 安全扫描无高危漏洞
+
+---
+
+### 综合练习（17-20）
+
+#### 练习17：完整的容器化测试项目
+
+**场景说明：**
+为一个 API 项目创建完整的容器化测试环境。
+
+**具体需求：**
+1. 编写 Dockerfile 构建测试镜像
+2. 编写 docker-compose.yml 配置所有依赖
+3. 配置 testcontainers 进行集成测试
+4. 编写 CI 配置文件
+
+**验收标准：**
+- [ ] Dockerfile 优化合理
+- [ ] 所有依赖服务正确配置
+- [ ] 集成测试通过
+- [ ] CI 流水线成功
+
+---
+
+#### 练习18：测试数据库迁移
+
+**场景说明：**
+测试数据库 schema 迁移脚本，需要干净的数据库环境。
+
+**具体需求：**
+1. 启动临时数据库容器
+2. 执行迁移脚本
+3. 验证迁移结果
+4. 清理容器
+
+**验收标准：**
+- [ ] 迁移脚本执行成功
+- [ ] 数据库结构正确
+- [ ] 测试数据验证通过
+- [ ] 资源正确清理
+
+---
+
+#### 练习19：并行测试容器隔离
+
+**场景说明：**
+并行运行测试需要为每个进程创建独立的容器实例。
+
+**具体需求：**
+1. 使用 pytest-xdist 并行测试
+2. 每个进程独立的数据库容器
+3. 避免数据冲突
+
+**验收标准：**
+- [ ] 并行测试成功
+- [ ] 容器隔离正确
+- [ ] 无数据冲突
+- [ ] 测试结果正确
+
+---
+
+#### 练习20：容器化测试报告
+
+**场景说明：**
+将测试报告从容器导出到主机。
+
+**具体需求：**
+1. 配置卷挂载导出报告
+2. 生成 Allure 报告
+3. 配置报告目录权限
+
+**验收标准：**
+- [ ] 报告正确导出
+- [ ] Allure 报告生成成功
+- [ ] 文件权限正确
+- [ ] 报告内容完整
+
+---
+
+## 五、检验标准
+
+### 自测题
+
+1. Docker 镜像和容器有什么区别？
+2. 如何编写一个优化的 Dockerfile？
+3. testcontainers 相比手动启动容器有什么优势？
+4. 如何在 CI/CD 中使用 Docker 运行测试？
+
+### 参考答案
+
+1. 镜像是只读模板，容器是镜像的运行实例
+2. 使用 slim 基础镜像、多阶段构建、合并层数、清理缓存
+3. 自动管理生命周期、测试隔离、无需手动清理
+4. 使用 services 配置依赖容器，或 docker-compose action
