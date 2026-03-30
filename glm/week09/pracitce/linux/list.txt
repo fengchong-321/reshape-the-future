@@ -1,0 +1,26 @@
+total 64
+drwxr-xr-x@ 12 fengchong  staff   384 Mar 28 11:09 .
+drwxr-xr-x@  3 fengchong  staff    96 Mar 28 08:30 ..
+-rw-r--r--@  1 fengchong  staff   413 Mar 28 09:15 app.log
+-rw-r--r--@  1 fengchong  staff   170 Mar 28 10:39 config.txt
+-rw-r--r--@  1 fengchong  staff  1041 Mar 28 08:45 data.txt
+drwxr-xr-x@  2 fengchong  staff    64 Mar 28 08:35 dir1
+drwxr-xr-x@  3 fengchong  staff    96 Mar 28 08:35 dir3
+-rw-r--r--@  1 fengchong  staff   652 Mar 28 11:05 list.txt
+-rw-r--r--@  1 fengchong  staff    45 Mar 28 11:09 output.txt
+-rw-r--r--@  1 fengchong  staff    31 Mar 28 08:56 script.sh
+-rwxr-xr-x@  1 fengchong  staff    31 Mar 28 08:56 script1.sh
+-rw-r--r--@  1 fengchong  staff    58 Mar 28 10:03 user.csv
+total 64
+drwxr-xr-x@ 12 fengchong  staff   384 Mar 28 11:09 .
+drwxr-xr-x@  3 fengchong  staff    96 Mar 28 08:30 ..
+-rw-r--r--@  1 fengchong  staff   413 Mar 28 09:15 app.log
+-rw-r--r--@  1 fengchong  staff   170 Mar 28 10:39 config.txt
+-rw-r--r--@  1 fengchong  staff  1041 Mar 28 08:45 data.txt
+drwxr-xr-x@  2 fengchong  staff    64 Mar 28 08:35 dir1
+drwxr-xr-x@  3 fengchong  staff    96 Mar 28 08:35 dir3
+-rw-r--r--@  1 fengchong  staff   714 Mar 28 11:28 list.txt
+-rw-r--r--@  1 fengchong  staff    45 Mar 28 11:09 output.txt
+-rw-r--r--@  1 fengchong  staff    31 Mar 28 08:56 script.sh
+-rwxr-xr-x@  1 fengchong  staff    31 Mar 28 08:56 script1.sh
+-rw-r--r--@  1 fengchong  staff    58 Mar 28 10:03 user.csv
